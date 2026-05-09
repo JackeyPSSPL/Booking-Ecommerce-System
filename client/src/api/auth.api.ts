@@ -1,7 +1,7 @@
 import { apiClient } from './client';
 
 export const authApi = {
-  register: (data: { email: string; password: string; firstName?: string; lastName?: string }) =>
+  register: (data: { email: string; password: string; firstName?: string; lastName?: string; role?: string }) =>
     apiClient.post('/auth/register', data).then((r) => r.data),
 
   verifyOtp: (userId: string, code: string) =>
