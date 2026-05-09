@@ -32,7 +32,7 @@ export default function RegisterPage() {
     mutationFn: (data: FormData) => authApi.register(data),
     onSuccess: (res) => {
       toast.success('Account created! Check your email for the verification code.');
-      navigate(`/verify-otp?userId=${res.data.userId}`);
+      navigate(`/verify-otp?userId=${res.data.userId}`, { state: { devOtp: res.data.devOtp } });
     },
   });
 

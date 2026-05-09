@@ -9,4 +9,10 @@ export const propertiesApi = {
 
   getById: (id: string, params?: Record<string, string>) =>
     apiClient.get(`/properties/${id}`, { params }).then((r) => r.data),
+
+  create: (data: Record<string, unknown>) =>
+    apiClient.post('/properties', data).then((r) => r.data),
+
+  publish: (id: string) =>
+    apiClient.post(`/properties/${id}/publish`).then((r) => r.data),
 };

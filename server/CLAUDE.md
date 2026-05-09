@@ -224,7 +224,6 @@ If any step throws, the entire transaction rolls back.
 - Property image upload (S3 / Cloudinary)
 - Admin panel routes (`/api/v1/admin/*`)
 - Partner onboarding 6-step wizard endpoints
-- Bright Data MCP integration (`/api/bd/*`)
 - WebSocket (Socket.IO) for real-time updates
 - Redis caching
 

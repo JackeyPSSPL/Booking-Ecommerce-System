@@ -10,7 +10,7 @@ import { LoginDto, RegisterDto, TokenPairDto, LoginResponseDto } from './auth.sc
 import { UserResponseDto } from '../users/users.schema';
 
 export class AuthService {
-  async register(dto: RegisterDto): Promise<{ userId: string }> {
+  async register(dto: RegisterDto): Promise<{ userId: string; devOtp?: string }> {
     try {
       const existing = await prisma.user.findUnique({ where: { email: dto.email } });
       if (existing) throw new ConflictError('Email already registered', 'EMAIL_IN_USE');
@@ -28,7 +28,9 @@ export class AuthService {
 
       await sendOtpEmail({ to: user.email, code });
       logger.info('User registered', { userId: user.id });
-      return { userId: user.id };
+      return config.NODE_ENV === 'development'
+        ? { userId: user.id, devOtp: code }
+        : { userId: user.id };
     } catch (error) {
       logger.error('Register failed', { error });
       if (error instanceof AppError) throw error;
