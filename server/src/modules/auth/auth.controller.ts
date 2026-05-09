@@ -26,6 +26,16 @@ export class AuthController {
     }
   };
 
+  verifyOtp = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const { userId, code } = req.body as { userId: string; code: string };
+      const result = await this.authService.verifyOtp(userId, code);
+      ok(res, result, 'Email verified');
+    } catch (error) {
+      next(error);
+    }
+  };
+
   refresh = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const { refreshToken } = refreshTokenSchema.parse(req.body);

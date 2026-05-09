@@ -1,4 +1,2 @@
-import { useDispatch } from 'react-redux';
-import type { AppDispatch } from '../store';
-
-export const useAppDispatch = () => useDispatch<AppDispatch>();
+// Unused — project uses Zustand, not Redux
+export {};

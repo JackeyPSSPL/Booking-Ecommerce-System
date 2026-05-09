@@ -9,6 +9,7 @@ const controller = new AuthController();
 const authLimiter = rateLimit({ windowMs: 60_000, max: 5 });
 
 router.post('/register', authLimiter, controller.register);
+router.post('/verify-otp', authLimiter, controller.verifyOtp);
 router.post('/login', authLimiter, controller.login);
 router.post('/refresh', controller.refresh);
 router.post('/logout', authenticate, controller.logout);
