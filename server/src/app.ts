@@ -12,6 +12,7 @@ import { searchRouter } from './modules/search/search.router';
 import { propertiesRouter } from './modules/properties/properties.router';
 import { bookingsRouter } from './modules/bookings/bookings.router';
 import { partnerRouter } from './modules/partner/partner.router';
+import { adminRouter } from './modules/admin/admin.router';
 
 export function createApp(): Application {
   const app = express();
@@ -41,6 +42,7 @@ export function createApp(): Application {
   app.use('/api/v1/properties', propertiesRouter);
   app.use('/api/v1/bookings', bookingsRouter);
   app.use('/api/v1/partner', partnerRouter);
+  app.use('/api/v1/admin', adminRouter);
 
   app.use(globalErrorHandler);
 

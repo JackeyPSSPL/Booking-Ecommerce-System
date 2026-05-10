@@ -27,7 +27,8 @@ export class BookingsRepository {
     checkin: Date;
     checkout: Date;
   }) {
-    const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
+    const ttlMs = process.env.NODE_ENV === 'production' ? 15 * 60 * 1000 : 60 * 60 * 1000;
+    const expiresAt = new Date(Date.now() + ttlMs);
     return prisma.availabilityHold.create({ data: { ...data, expiresAt } });
   }
 

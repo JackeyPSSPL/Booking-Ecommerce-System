@@ -9,6 +9,7 @@ import { Property, RoomType } from '../../types';
 import { formatPrice, formatNights } from '../../utils/format';
 import { getApiError } from '../../utils/error';
 import Header from '../../components/layout/Header';
+import Footer from '../../components/layout/Footer';
 import PageWrapper from '../../components/layout/PageWrapper';
 import Button from '../../components/ui/Button';
 import Spinner from '../../components/ui/Spinner';
@@ -202,6 +203,7 @@ export default function PropertyDetailPage() {
           </div>
         </div>
       </PageWrapper>
+      <Footer />
     </div>
   );
 }

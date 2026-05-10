@@ -1,5 +1,5 @@
-export function formatPrice(amount: number | string, currency = 'USD'): string {
-  return new Intl.NumberFormat('en-US', { style: 'currency', currency }).format(Number(amount));
+export function formatPrice(amount: number | string, currency = 'INR'): string {
+  return new Intl.NumberFormat('en-IN', { style: 'currency', currency }).format(Number(amount));
 }
 
 export function formatDate(date: string): string {

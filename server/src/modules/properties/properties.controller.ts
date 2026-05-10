@@ -5,6 +5,15 @@ import { ok, created } from '../../common/utils/response';
 export class PropertiesController {
   private readonly service = new PropertiesService();
 
+  getFeatured = async (_req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const properties = await this.service.getFeatured();
+      ok(res, properties);
+    } catch (error) {
+      next(error);
+    }
+  };
+
   getById = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const property = await this.service.getById(req.params.id);

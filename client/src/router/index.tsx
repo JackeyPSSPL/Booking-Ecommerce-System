@@ -11,12 +11,18 @@ const GuestDetailsPage = lazy(() => import('../features/checkout/guest-details-p
 const PaymentPage      = lazy(() => import('../features/checkout/payment-page'));
 const ConfirmationPage = lazy(() => import('../features/checkout/confirmation-page'));
 const TripsPage        = lazy(() => import('../features/trips/trips-page'));
+const TripDetailPage   = lazy(() => import('../features/trips/trip-detail-page'));
 
 const PartnerDashboard    = lazy(() => import('../features/partner/dashboard/partner-dashboard-page'));
 const PartnerOnboarding   = lazy(() => import('../features/partner/onboarding/partner-onboarding-page'));
 const PartnerBookings     = lazy(() => import('../features/partner/bookings/partner-bookings-page'));
 const PartnerAvailability = lazy(() => import('../features/partner/availability/partner-availability-page'));
 const PartnerEarnings     = lazy(() => import('../features/partner/earnings/partner-earnings-page'));
+
+const AdminDashboard   = lazy(() => import('../features/admin/dashboard/admin-dashboard-page'));
+const AdminUsers       = lazy(() => import('../features/admin/users/admin-users-page'));
+const AdminProperties  = lazy(() => import('../features/admin/properties/admin-properties-page'));
+const AdminBookings    = lazy(() => import('../features/admin/bookings/admin-bookings-page'));
 
 function ProtectedRoute({ children, role }: { children: React.ReactNode; role?: string }): React.ReactElement {
   const { user, accessToken } = useAuthStore();
@@ -48,6 +54,10 @@ const router = createBrowserRouter([
     element: <ProtectedRoute><TripsPage /></ProtectedRoute>,
   },
   {
+    path: '/trips/:bookingId',
+    element: <ProtectedRoute><TripDetailPage /></ProtectedRoute>,
+  },
+  {
     path: '/partner/dashboard',
     element: <ProtectedRoute role="PARTNER"><PartnerDashboard /></ProtectedRoute>,
   },
@@ -66,6 +76,22 @@ const router = createBrowserRouter([
   {
     path: '/partner/earnings',
     element: <ProtectedRoute role="PARTNER"><PartnerEarnings /></ProtectedRoute>,
+  },
+  {
+    path: '/admin/dashboard',
+    element: <ProtectedRoute role="ADMIN"><AdminDashboard /></ProtectedRoute>,
+  },
+  {
+    path: '/admin/users',
+    element: <ProtectedRoute role="ADMIN"><AdminUsers /></ProtectedRoute>,
+  },
+  {
+    path: '/admin/properties',
+    element: <ProtectedRoute role="ADMIN"><AdminProperties /></ProtectedRoute>,
+  },
+  {
+    path: '/admin/bookings',
+    element: <ProtectedRoute role="ADMIN"><AdminBookings /></ProtectedRoute>,
   },
 ]);
 

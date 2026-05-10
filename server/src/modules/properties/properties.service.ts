@@ -39,6 +39,16 @@ export class PropertiesService {
     }
   }
 
+  async getFeatured() {
+    try {
+      return await this.repo.getFeatured();
+    } catch (error) {
+      logger.error('Failed to get featured properties', { error });
+      if (error instanceof AppError) throw error;
+      throw new AppError(500, 'FEATURED_FAILED', 'Failed to load featured properties');
+    }
+  }
+
   async publish(id: string, userId: string) {
     const property = await this.repo.findById(id);
     if (!property) throw new NotFoundError('Property not found');

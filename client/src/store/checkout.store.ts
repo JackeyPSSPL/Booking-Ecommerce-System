@@ -28,6 +28,9 @@ interface GuestDetails {
   specialRequests?: string;
   arrivalTime?: string;
   isMainGuest: boolean;
+  travelPurpose?: 'leisure' | 'work';
+  addOns?: { flight: boolean; carRental: boolean; airportTaxi: boolean };
+  paperlessConfirmation?: boolean;
 }
 
 interface CheckoutState {

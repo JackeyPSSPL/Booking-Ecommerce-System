@@ -9,6 +9,7 @@ import { PropertiesController } from './properties.controller';
 const router = Router();
 const controller = new PropertiesController();
 
+router.get('/featured', controller.getFeatured);
 router.get('/:id', controller.getById);
 router.post('/', authenticate, authorize(Role.PARTNER, Role.ADMIN), validate(createPropertySchema), controller.create);
 router.patch('/:id', authenticate, authorize(Role.PARTNER, Role.ADMIN), validate(updatePropertySchema), controller.update);

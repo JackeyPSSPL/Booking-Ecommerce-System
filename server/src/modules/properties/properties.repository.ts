@@ -1,6 +1,7 @@
 import { Prisma, PropertyStatus } from '@prisma/client';
 import { prisma } from '../../config/prisma';
 import { CreatePropertyDto, UpdatePropertyDto } from './properties.schema';
+import { PropertySearchResult } from '../search/search.repository';
 
 export class PropertiesRepository {
   async create(ownerId: string, data: CreatePropertyDto) {
@@ -55,5 +56,37 @@ export class PropertiesRepository {
       where: { id },
       data: { status: PropertyStatus.ACTIVE },
     });
+  }
+
+  async getFeatured(): Promise<PropertySearchResult[]> {
+    return prisma.$queryRaw<PropertySearchResult[]>(Prisma.sql`
+      SELECT
+        p.id,
+        p.name,
+        p.city,
+        p.address,
+        p.category::text  AS category,
+        p.status::text    AS status,
+        p.star_rating,
+        p.amenities,
+        p.description,
+        p.booking_mode::text AS booking_mode,
+        (
+          SELECT MIN(rt.base_price)::text
+          FROM room_types rt
+          WHERE rt.property_id = p.id
+        ) AS min_price,
+        (
+          SELECT pi.url
+          FROM property_images pi
+          WHERE pi.property_id = p.id
+          ORDER BY pi.sort_order ASC
+          LIMIT 1
+        ) AS cover_image
+      FROM properties p
+      WHERE p.status = 'ACTIVE'
+      ORDER BY p.star_rating DESC NULLS LAST, p.name ASC
+      LIMIT 8
+    `);
   }
 }

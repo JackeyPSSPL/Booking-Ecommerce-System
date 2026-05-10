@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import { bookingsApi } from '../../api/bookings.api';
@@ -12,21 +13,22 @@ import Spinner from '../../components/ui/Spinner';
 import ErrorBanner from '../../components/ui/ErrorBanner';
 import Badge from '../../components/ui/Badge';
 
-type Tab = 'upcoming' | 'past' | 'cancelled';
+type Tab = 'past' | 'cancelled';
 
 function classifyBooking(b: BookingListItem): Tab {
   if (b.status === 'CANCELLED') return 'cancelled';
-  return new Date(b.checkin) >= new Date() ? 'upcoming' : 'past';
+  return 'past';
 }
 
 const TAB_LABELS: Record<Tab, string> = {
-  upcoming:  'Upcoming',
   past:      'Past',
   cancelled: 'Cancelled',
 };
 
 export default function TripsPage() {
-  const [activeTab, setActiveTab] = useState<Tab>('upcoming');
+  const navigate    = useNavigate();
+  const [activeTab, setActiveTab]     = useState<Tab>('past');
+  const [confirmingId, setConfirmingId] = useState<string | null>(null);
   const queryClient = useQueryClient();
 
   const { data, isLoading, isError, error } = useQuery({
@@ -38,16 +40,20 @@ export default function TripsPage() {
     mutationFn: (bookingId: string) => bookingsApi.cancel(bookingId),
     onSuccess: () => {
       toast.success('Booking cancelled');
+      setConfirmingId(null);
       queryClient.invalidateQueries({ queryKey: ['my-bookings'] });
+      setActiveTab('cancelled');
     },
-    onError: (err) => toast.error(getApiError(err)),
+    onError: (err) => {
+      setConfirmingId(null);
+      toast.error(getApiError(err));
+    },
   });
 
   const allBookings: BookingListItem[] = data?.data ?? [];
   const tabBookings = allBookings.filter(b => classifyBooking(b) === activeTab);
 
   const counts: Record<Tab, number> = {
-    upcoming:  allBookings.filter(b => classifyBooking(b) === 'upcoming').length,
     past:      allBookings.filter(b => classifyBooking(b) === 'past').length,
     cancelled: allBookings.filter(b => classifyBooking(b) === 'cancelled').length,
   };
@@ -56,7 +62,7 @@ export default function TripsPage() {
     <div className="min-h-screen bg-gray-50">
       <Header />
       <PageWrapper>
-        <h1 className="text-2xl font-bold text-gray-900 mb-6">My trips</h1>
+        <h1 className="text-2xl font-bold text-gray-900 mb-6">My Stay Booked</h1>
 
         {/* Tab bar */}
         <div className="flex gap-1 mb-6 border-b border-gray-200">
@@ -67,7 +73,7 @@ export default function TripsPage() {
               className={[
                 'px-4 py-2.5 text-sm font-medium transition-colors relative',
                 activeTab === tab
-                  ? 'text-primary-500 border-b-2 border-primary-500 -mb-px'
+                  ? 'text-[#003580] border-b-2 border-[#003580] -mb-px'
                   : 'text-gray-500 hover:text-gray-700',
               ].join(' ')}
             >
@@ -76,7 +82,7 @@ export default function TripsPage() {
                 <span className={[
                   'ml-1.5 text-xs px-1.5 py-0.5 rounded-full',
                   activeTab === tab
-                    ? 'bg-primary-100 text-primary-600'
+                    ? 'bg-blue-100 text-[#003580]'
                     : 'bg-gray-100 text-gray-500',
                 ].join(' ')}>
                   {counts[tab]}
@@ -96,14 +102,10 @@ export default function TripsPage() {
         {!isLoading && !isError && tabBookings.length === 0 && (
           <div className="text-center py-20">
             <p className="text-gray-400 mb-2">
-              {activeTab === 'upcoming'
-                ? 'No upcoming trips.'
-                : activeTab === 'past'
-                ? 'No past trips yet.'
-                : 'No cancelled bookings.'}
+              {activeTab === 'past' ? 'No past bookings yet.' : 'No cancelled bookings.'}
             </p>
-            {activeTab === 'upcoming' && (
-              <a href="/" className="text-sm text-primary-500 hover:underline">
+            {activeTab === 'past' && (
+              <a href="/" className="text-sm text-[#003580] hover:underline">
                 Start searching →
               </a>
             )}
@@ -116,8 +118,12 @@ export default function TripsPage() {
               <BookingCard
                 key={b.id}
                 booking={b}
+                confirming={confirmingId === b.id}
                 cancelling={cancelMutation.isPending && cancelMutation.variables === b.id}
-                onCancel={() => cancelMutation.mutate(b.id)}
+                onView={() => navigate(`/trips/${b.id}`, { state: { booking: b } })}
+                onRequestCancel={() => setConfirmingId(b.id)}
+                onConfirmCancel={() => cancelMutation.mutate(b.id)}
+                onDismissCancel={() => setConfirmingId(null)}
               />
             ))}
           </div>
@@ -129,17 +135,28 @@ export default function TripsPage() {
 
 function BookingCard({
   booking,
+  confirming,
   cancelling,
-  onCancel,
+  onView,
+  onRequestCancel,
+  onConfirmCancel,
+  onDismissCancel,
 }: {
-  booking:    BookingListItem;
-  cancelling: boolean;
-  onCancel:   () => void;
+  booking:         BookingListItem;
+  confirming:      boolean;
+  cancelling:      boolean;
+  onView:          () => void;
+  onRequestCancel: () => void;
+  onConfirmCancel: () => void;
+  onDismissCancel: () => void;
 }) {
-  const isUpcoming = new Date(booking.checkin) >= new Date() && booking.status === 'CONFIRMED';
+  const isCancellable = booking.status === 'CONFIRMED';
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 p-6">
+    <div
+      className="bg-white rounded-xl border border-gray-200 p-6 cursor-pointer hover:shadow-md transition-shadow"
+      onClick={onView}
+    >
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
           <div className="flex items-center gap-3 mb-1">
@@ -171,16 +188,30 @@ function BookingCard({
         ))}
       </dl>
 
-      {isUpcoming && (
-        <div className="mt-4 flex justify-end">
-          <Button
-            variant="danger"
-            size="sm"
-            loading={cancelling}
-            onClick={onCancel}
-          >
+      {isCancellable && !confirming && (
+        <div className="mt-4 flex justify-end" onClick={(e) => e.stopPropagation()}>
+          <Button variant="danger" size="sm" onClick={onRequestCancel}>
             Cancel booking
           </Button>
+        </div>
+      )}
+
+      {isCancellable && confirming && (
+        <div
+          className="mt-4 rounded-lg border border-red-200 bg-red-50 p-4"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <p className="text-sm font-medium text-red-800 mb-3">
+            Are you sure you want to cancel this trip?
+          </p>
+          <div className="flex justify-end gap-2">
+            <Button variant="secondary" size="sm" onClick={onDismissCancel} disabled={cancelling}>
+              No, keep it
+            </Button>
+            <Button variant="danger" size="sm" loading={cancelling} onClick={onConfirmCancel}>
+              Yes, cancel
+            </Button>
+          </div>
         </div>
       )}
     </div>

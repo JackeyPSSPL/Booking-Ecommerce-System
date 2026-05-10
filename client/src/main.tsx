@@ -20,7 +20,14 @@ ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
   <React.StrictMode>
     <QueryClientProvider client={queryClient}>
       <AppRouter />
-      <Toaster position="top-right" />
+      <Toaster
+        position="top-right"
+        toastOptions={{
+          duration: 4000,
+          style: { zIndex: 9999 },
+          error: { duration: 5000 },
+        }}
+      />
       <ReactQueryDevtools />
     </QueryClientProvider>
   </React.StrictMode>,

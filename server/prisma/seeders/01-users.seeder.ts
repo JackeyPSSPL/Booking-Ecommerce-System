@@ -23,7 +23,7 @@ export async function seedUsers(prisma: PrismaClient): Promise<Record<string, st
   const userIds: Record<string, string> = {};
 
   for (const u of USERS) {
-    const passwordHash = await bcrypt.hash(u.password, 12);
+    const passwordHash = await bcrypt.hash(u.password, 10);
     const user = await prisma.user.upsert({
       where:  { email: u.email },
       update: {},

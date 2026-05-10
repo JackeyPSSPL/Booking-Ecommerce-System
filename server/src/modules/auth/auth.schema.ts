@@ -10,6 +10,7 @@ export const registerSchema = z.object({
   password: z.string().min(8),
   firstName: z.string().min(1).trim(),
   lastName: z.string().min(1).trim(),
+  role: z.enum(['CUSTOMER', 'PARTNER']).default('CUSTOMER'),
 });
 
 export const refreshTokenSchema = z.object({

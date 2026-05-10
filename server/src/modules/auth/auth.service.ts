@@ -15,13 +15,14 @@ export class AuthService {
       const existing = await prisma.user.findUnique({ where: { email: dto.email } });
       if (existing) throw new ConflictError('Email already registered', 'EMAIL_IN_USE');
 
-      const passwordHash = await bcrypt.hash(dto.password, 12);
+      const ROUNDS = config.NODE_ENV === 'production' ? 12 : 10;
+      const passwordHash = await bcrypt.hash(dto.password, ROUNDS);
       const user = await prisma.user.create({
-        data: { email: dto.email, passwordHash, firstName: dto.firstName, lastName: dto.lastName },
+        data: { email: dto.email, passwordHash, firstName: dto.firstName, lastName: dto.lastName, role: dto.role as Role },
       });
 
       const code = Math.floor(100000 + Math.random() * 900000).toString();
-      const codeHash = await bcrypt.hash(code, 10);
+      const codeHash = await bcrypt.hash(code, ROUNDS);
       await prisma.otpToken.create({
         data: { userId: user.id, codeHash, expiresAt: new Date(Date.now() + 10 * 60 * 1000) },
       });

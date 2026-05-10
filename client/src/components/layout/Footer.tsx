@@ -55,7 +55,6 @@ export default function Footer() {
             <button
               key={dest}
               onClick={() => {
-                const params = new URLSearchParams(window.location.search);
                 window.location.href = `/?destination=${encodeURIComponent(dest)}`;
               }}
               className="text-sm text-[#003580] hover:underline py-1"

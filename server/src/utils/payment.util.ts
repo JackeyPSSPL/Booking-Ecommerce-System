@@ -1,5 +1,4 @@
 import crypto from 'crypto';
-import { config } from '../config/env';
 import { logger } from '../common/utils/logger';
 
 interface PaymentInput {
@@ -14,17 +13,14 @@ interface PaymentResult {
   failureReason?: string;
 }
 
-/**
- * Simulates a payment — no external service called.
- * Phase 2: replace this body with stripe.paymentIntents.create() + confirm().
- */
 export function simulatePayment(input: PaymentInput): PaymentResult {
   logger.info('simulatePayment called', {
     cardholderName: input.cardholderName,
     cardNumberLast4: input.cardNumberLast4,
+    simulateFailure: input.simulateFailure ?? false,
   });
 
-  if (config.SIMULATE_PAYMENT_FAILURE || input.simulateFailure) {
+  if (input.simulateFailure === true) {
     return {
       success: false,
       transactionId: `FAIL-${crypto.randomUUID()}`,

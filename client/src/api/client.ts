@@ -2,9 +2,9 @@ import axios from 'axios';
 import { useAuthStore } from '../store/auth.store';
 
 export const apiClient = axios.create({
-  baseURL: (import.meta.env.VITE_API_URL as string) ?? 'http://localhost:3001/api/v1',
+  baseURL: (import.meta.env.VITE_API_URL as string) ?? 'http://localhost:3000/api/v1',
   headers: { 'Content-Type': 'application/json' },
-  timeout: 10_000,
+  timeout: 15_000,
 });
 
 apiClient.interceptors.request.use((config) => {
@@ -17,8 +17,9 @@ apiClient.interceptors.response.use(
   (res) => res,
   async (error) => {
     const original = error.config;
+    const isAuthRoute = (original?.url as string | undefined)?.includes('/auth/');
 
-    if (error.response?.status === 401 && !original._retry) {
+    if (error.response?.status === 401 && !original._retry && !isAuthRoute) {
       original._retry = true;
       const { refreshToken, setTokens, clear } = useAuthStore.getState();
 
