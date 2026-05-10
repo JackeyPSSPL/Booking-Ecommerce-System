@@ -102,7 +102,9 @@ export default function Header() {
                     <p className="text-xs text-gray-500 truncate">{user?.email}</p>
                   </div>
 
-                  <DropItem to="/trips"  label="📋 My Stay Booked"    onClick={() => setOpen(false)} />
+                  {!isPartner && (
+                    <DropItem to="/trips" label="📋 My Stay Booked" onClick={() => setOpen(false)} />
+                  )}
                   {isPartner && (
                     <DropItem to="/partner/dashboard" label="🏠 Partner Dashboard" onClick={() => setOpen(false)} />
                   )}

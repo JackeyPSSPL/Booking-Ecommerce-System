@@ -114,8 +114,38 @@ export default function PartnerAvailabilityPage() {
     'pending-unblock': 'bg-green-50 border-green-300 text-green-700 cursor-pointer ring-2 ring-green-200',
   };
 
+  if (!propData && !isLoading) {
+    return (
+      <PartnerLayout title="Availability Calendar" backTo="/partner/dashboard" backLabel="Dashboard">
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-10 text-center max-w-lg">
+          <p className="text-3xl mb-3">🏨</p>
+          <p className="text-gray-700 font-semibold">Property not found</p>
+          <p className="text-sm text-gray-400 mt-1">Could not load property data. Go back and try again.</p>
+        </div>
+      </PartnerLayout>
+    );
+  }
+
+  if (propData && roomTypes.length === 0) {
+    return (
+      <PartnerLayout title="Availability Calendar">
+        <div className="bg-white rounded-2xl border border-dashed border-gray-300 p-10 text-center max-w-lg">
+          <p className="text-3xl mb-3">🛏</p>
+          <p className="text-gray-700 font-semibold">No room types configured yet</p>
+          <p className="text-sm text-gray-400 mt-2 max-w-sm mx-auto">
+            Your property <strong className="text-gray-600">{property?.name}</strong> doesn't have any room types.
+            Add at least one room type with a price before managing availability.
+          </p>
+          <p className="text-xs text-amber-600 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 mt-5 inline-block">
+            Room types define beds, occupancy, and pricing — customers need them to book.
+          </p>
+        </div>
+      </PartnerLayout>
+    );
+  }
+
   return (
-    <PartnerLayout title="Availability Calendar">
+    <PartnerLayout title="Availability Calendar" backTo="/partner/dashboard" backLabel="Dashboard">
       {isError && <ErrorBanner message={getApiError(error)} />}
 
       <div className="flex flex-wrap gap-4 mb-6 items-start">

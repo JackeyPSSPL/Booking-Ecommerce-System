@@ -1,7 +1,7 @@
-import { NavLink, useNavigate } from 'react-router-dom';
+import { NavLink, Link, useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../../store/auth.store';
 
-interface Props { children: React.ReactNode; title: string }
+interface Props { children: React.ReactNode; title: string; backTo?: string; backLabel?: string }
 
 const NAV = [
   { to: '/partner/dashboard',  label: 'Dashboard',     icon: '🏠' },
@@ -10,7 +10,7 @@ const NAV = [
   { to: '/partner/onboarding', label: 'Add Property',  icon: '➕' },
 ];
 
-export default function PartnerLayout({ children, title }: Props) {
+export default function PartnerLayout({ children, title, backTo, backLabel = 'Back' }: Props) {
   const { user, clear } = useAuthStore();
   const navigate = useNavigate();
 
@@ -58,7 +58,17 @@ export default function PartnerLayout({ children, title }: Props) {
       {/* Main */}
       <div className="flex-1 flex flex-col min-w-0">
         <header className="bg-white border-b border-gray-200 px-8 py-4 flex items-center justify-between">
-          <h1 className="text-xl font-bold text-gray-800">{title}</h1>
+          <div className="flex items-center gap-3">
+            {backTo && (
+              <Link
+                to={backTo}
+                className="text-sm text-gray-400 hover:text-[#003580] font-medium transition-colors flex items-center gap-1"
+              >
+                ← {backLabel}
+              </Link>
+            )}
+            <h1 className="text-xl font-bold text-gray-800">{title}</h1>
+          </div>
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-full bg-[#003580] flex items-center justify-center text-white text-sm font-bold">
               {user?.firstName?.[0] ?? user?.email?.[0]?.toUpperCase()}

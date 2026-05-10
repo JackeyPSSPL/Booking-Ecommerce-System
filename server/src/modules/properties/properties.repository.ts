@@ -1,6 +1,6 @@
 import { Prisma, PropertyStatus } from '@prisma/client';
 import { prisma } from '../../config/prisma';
-import { CreatePropertyDto, UpdatePropertyDto } from './properties.schema';
+import { CreatePropertyDto, UpdatePropertyDto, AddRoomTypeDto, AddImagesDto } from './properties.schema';
 import { PropertySearchResult } from '../search/search.repository';
 
 export class PropertiesRepository {
@@ -55,6 +55,38 @@ export class PropertiesRepository {
     return prisma.property.update({
       where: { id },
       data: { status: PropertyStatus.ACTIVE },
+    });
+  }
+
+  async addRoomType(propertyId: string, data: AddRoomTypeDto) {
+    return prisma.$transaction(async (tx) => {
+      const roomType = await tx.roomType.create({
+        data: {
+          propertyId,
+          name: data.name,
+          description: data.description,
+          maxOccupancy: data.maxOccupancy,
+          basePrice: data.basePrice,
+          mealPlan: data.mealPlan,
+          cancellationPolicy: data.cancellationPolicy,
+          bedConfig: (data.bedConfig ?? {}) as Prisma.InputJsonValue,
+        },
+      });
+      await tx.ratePlan.create({
+        data: { roomTypeId: roomType.id, planType: 'STANDARD', discountPercent: 0, minNights: 1 },
+      });
+      return roomType;
+    });
+  }
+
+  async addImages(propertyId: string, data: AddImagesDto) {
+    return prisma.propertyImage.createMany({
+      data: data.images.map((img, idx) => ({
+        propertyId,
+        url: img.url,
+        tag: img.tag,
+        sortOrder: img.sortOrder ?? idx,
+      })),
     });
   }
 

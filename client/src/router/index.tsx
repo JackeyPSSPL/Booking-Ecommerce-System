@@ -18,11 +18,23 @@ const PartnerOnboarding   = lazy(() => import('../features/partner/onboarding/pa
 const PartnerBookings     = lazy(() => import('../features/partner/bookings/partner-bookings-page'));
 const PartnerAvailability = lazy(() => import('../features/partner/availability/partner-availability-page'));
 const PartnerEarnings     = lazy(() => import('../features/partner/earnings/partner-earnings-page'));
+const PartnerPropertyEdit = lazy(() => import('../features/partner/edit/partner-property-edit-page'));
 
 const AdminDashboard   = lazy(() => import('../features/admin/dashboard/admin-dashboard-page'));
 const AdminUsers       = lazy(() => import('../features/admin/users/admin-users-page'));
 const AdminProperties  = lazy(() => import('../features/admin/properties/admin-properties-page'));
 const AdminBookings    = lazy(() => import('../features/admin/bookings/admin-bookings-page'));
+
+function HomeRoute(): React.ReactElement {
+  const { user } = useAuthStore();
+  if (user?.role === 'PARTNER') return <Navigate to="/partner/dashboard" replace />;
+  if (user?.role === 'ADMIN')   return <Navigate to="/admin/dashboard"   replace />;
+  return (
+    <Suspense fallback={<div className="flex h-screen items-center justify-center text-gray-400">Loading…</div>}>
+      <SearchPage />
+    </Suspense>
+  );
+}
 
 function ProtectedRoute({ children, role }: { children: React.ReactNode; role?: string }): React.ReactElement {
   const { user, accessToken } = useAuthStore();
@@ -32,7 +44,7 @@ function ProtectedRoute({ children, role }: { children: React.ReactNode; role?: 
 }
 
 const router = createBrowserRouter([
-  { path: '/', element: <SearchPage /> },
+  { path: '/', element: <HomeRoute /> },
   { path: '/login', element: <LoginPage /> },
   { path: '/register', element: <RegisterPage /> },
   { path: '/verify-otp', element: <OtpPage /> },
@@ -72,6 +84,10 @@ const router = createBrowserRouter([
   {
     path: '/partner/properties/:id/availability',
     element: <ProtectedRoute role="PARTNER"><PartnerAvailability /></ProtectedRoute>,
+  },
+  {
+    path: '/partner/properties/:id/edit',
+    element: <ProtectedRoute role="PARTNER"><PartnerPropertyEdit /></ProtectedRoute>,
   },
   {
     path: '/partner/earnings',

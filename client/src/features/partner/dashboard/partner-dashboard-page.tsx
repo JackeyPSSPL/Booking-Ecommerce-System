@@ -1,11 +1,12 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
+import toast from 'react-hot-toast';
 import { partnerApi } from '../../../api/partner.api';
+import { propertiesApi } from '../../../api/properties.api';
 import { getApiError } from '../../../utils/error';
-import { formatPrice, formatDate } from '../../../utils/format';
+import { formatPrice } from '../../../utils/format';
 import Spinner from '../../../components/ui/Spinner';
 import ErrorBanner from '../../../components/ui/ErrorBanner';
-import Badge from '../../../components/ui/Badge';
 import PartnerLayout from '../partner-layout';
 
 function StatCard({ label, value, sub, color }: { label: string; value: string | number; sub?: string; color: string }) {
@@ -19,13 +20,22 @@ function StatCard({ label, value, sub, color }: { label: string; value: string |
 }
 
 export default function PartnerDashboardPage() {
-  const summaryQ   = useQuery({ queryKey: ['partner-summary'],    queryFn: partnerApi.getSummary,          staleTime: 60_000 });
-  const propertiesQ = useQuery({ queryKey: ['partner-properties'], queryFn: partnerApi.getProperties,        staleTime: 60_000 });
-  const arrivalsQ  = useQuery({ queryKey: ['partner-arrivals'],   queryFn: partnerApi.getUpcomingArrivals,  staleTime: 60_000 });
+  const summaryQ    = useQuery({ queryKey: ['partner-summary'],    queryFn: partnerApi.getSummary,    staleTime: 60_000 });
+  const propertiesQ = useQuery({ queryKey: ['partner-properties'], queryFn: partnerApi.getProperties, staleTime: 60_000 });
 
   const summary    = summaryQ.data?.data;
   const properties = propertiesQ.data?.data ?? [];
-  const arrivals   = arrivalsQ.data?.data ?? [];
+
+  const qc = useQueryClient();
+  const publishMutation = useMutation({
+    mutationFn: (id: string) => propertiesApi.publish(id),
+    onSuccess: () => {
+      toast.success('Property is now live!');
+      qc.invalidateQueries({ queryKey: ['partner-properties'] });
+      qc.invalidateQueries({ queryKey: ['partner-summary'] });
+    },
+    onError: (e) => toast.error(getApiError(e)),
+  });
 
   const statusColor: Record<string, string> = {
     ACTIVE: 'text-green-700 bg-green-50 border-green-200',
@@ -37,23 +47,36 @@ export default function PartnerDashboardPage() {
     <PartnerLayout title="Dashboard">
       {summaryQ.isError && <ErrorBanner message={getApiError(summaryQ.error)} />}
 
+      {/* Customer visibility hint */}
+      {properties.some((p: any) => p.status === 'ACTIVE' && (p.roomTypes?.length ?? 0) === 0) && (
+        <div className="mb-6 p-4 rounded-xl bg-amber-50 border border-amber-200 text-sm text-amber-800 flex items-start gap-3">
+          <span className="text-xl shrink-0">⚠️</span>
+          <div>
+            <p className="font-semibold">Some properties aren&apos;t visible to customers yet</p>
+            <p className="text-xs text-amber-700 mt-0.5">
+              Properties need at least one <strong>room type with a price</strong> to appear in customer search results.
+              Contact support or use the API to add room types.
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+      <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
         {summaryQ.isLoading ? (
-          <div className="col-span-4 py-6 flex justify-center"><Spinner /></div>
+          <div className="col-span-3 py-6 flex justify-center"><Spinner /></div>
         ) : (
           <>
-            <StatCard label="Total Properties"   value={summary?.totalProperties   ?? 0} color="text-[#003580]" />
-            <StatCard label="Active Bookings"    value={summary?.activeBookings    ?? 0} color="text-green-600" sub="with future checkout" />
+            <StatCard label="Total Properties"   value={summary?.totalProperties ?? 0} color="text-[#003580]" />
+            <StatCard label="Active Bookings"    value={summary?.activeBookings  ?? 0} color="text-green-600" sub="with future checkout" />
             <StatCard label="Revenue This Month" value={formatPrice(summary?.monthlyRevenue ?? 0)} color="text-emerald-600" />
-            <StatCard label="Upcoming Arrivals"  value={summary?.upcomingArrivals  ?? 0} color="text-orange-500" sub="next 7 days" />
           </>
         )}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 gap-6">
         {/* Properties list */}
-        <div className="lg:col-span-2">
+        <div>
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-base font-bold text-gray-800">Your Properties</h2>
             <Link
@@ -84,11 +107,17 @@ export default function PartnerDashboardPage() {
           <div className="space-y-3">
             {properties.map((p: any) => (
               <div key={p.id} className="bg-white rounded-xl border border-gray-100 shadow-sm p-4 flex gap-4 items-center">
-                {p.images?.[0] ? (
-                  <img src={p.images[0].url} alt={p.name} className="w-16 h-16 rounded-lg object-cover shrink-0" />
-                ) : (
-                  <div className="w-16 h-16 rounded-lg bg-gray-100 flex items-center justify-center text-2xl shrink-0">🏨</div>
-                )}
+                <div className="w-16 h-16 rounded-lg bg-gray-100 flex items-center justify-center text-2xl shrink-0 relative">
+                  🏨
+                  {p.images?.[0] && (
+                    <img
+                      src={p.images[0].url}
+                      alt={p.name}
+                      className="absolute inset-0 w-full h-full rounded-lg object-cover"
+                      onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                    />
+                  )}
+                </div>
                 <div className="flex-1 min-w-0">
                   <p className="font-semibold text-gray-800 truncate">{p.name}</p>
                   <p className="text-xs text-gray-400 mt-0.5">{p.city} · {p.category}</p>
@@ -98,37 +127,43 @@ export default function PartnerDashboardPage() {
                   <span className={`text-[10px] font-bold uppercase tracking-wide border px-2 py-0.5 rounded-full ${statusColor[p.status] ?? ''}`}>
                     {p.status}
                   </span>
+                  {(p.roomTypes?.length ?? 0) === 0 && (
+                    <span className="text-[10px] text-amber-600 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full font-medium">
+                      ⚠ No room types
+                    </span>
+                  )}
+                  <Link
+                    to={`/partner/properties/${p.id}/edit`}
+                    className="text-xs text-gray-500 hover:text-[#003580] hover:underline font-medium"
+                  >
+                    ✏ Edit
+                  </Link>
+                  {p.status === 'DRAFT' && (
+                    <button
+                      onClick={() => publishMutation.mutate(p.id)}
+                      disabled={publishMutation.isPending || (p.roomTypes?.length ?? 0) === 0}
+                      title={(p.roomTypes?.length ?? 0) === 0 ? 'Add a room type before publishing' : 'Make this property visible to customers'}
+                      className="text-xs text-green-700 hover:underline font-medium disabled:opacity-40 disabled:cursor-not-allowed"
+                    >
+                      {publishMutation.isPending ? 'Publishing…' : 'Publish →'}
+                    </button>
+                  )}
                   <Link
                     to={`/partner/properties/${p.id}/availability`}
                     className="text-xs text-[#003580] hover:underline font-medium"
                   >
                     Availability →
                   </Link>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Upcoming arrivals */}
-        <div>
-          <h2 className="text-base font-bold text-gray-800 mb-4">Upcoming Arrivals</h2>
-          {arrivalsQ.isLoading && <div className="py-6 flex justify-center"><Spinner size="sm" /></div>}
-          {arrivals.length === 0 && !arrivalsQ.isLoading && (
-            <div className="bg-white rounded-xl border border-gray-100 p-6 text-center text-sm text-gray-400">
-              No arrivals in the next 7 days
-            </div>
-          )}
-          <div className="space-y-3">
-            {arrivals.map((a: any) => (
-              <div key={a.id} className="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
-                <p className="font-semibold text-gray-800 text-sm">{a.guestName}</p>
-                <p className="text-xs text-gray-500 mt-0.5">{a.property.name} · {a.roomType.name}</p>
-                <div className="flex items-center justify-between mt-2">
-                  <span className="text-xs text-[#003580] font-medium">
-                    Check-in: {formatDate(a.checkin)}
-                  </span>
-                  <Badge status="CONFIRMED" />
+                  {p.status === 'ACTIVE' && (
+                    <Link
+                      to={`/property/${p.id}`}
+                      className="text-xs text-green-700 hover:underline font-medium"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      View as customer ↗
+                    </Link>
+                  )}
                 </div>
               </div>
             ))}

@@ -1,5 +1,5 @@
 import { PropertiesRepository } from './properties.repository';
-import { CreatePropertyDto, UpdatePropertyDto } from './properties.schema';
+import { CreatePropertyDto, UpdatePropertyDto, AddRoomTypeDto, AddImagesDto } from './properties.schema';
 import { AppError, NotFoundError, ForbiddenError, ConflictError } from '../../common/errors/app-error';
 import { logger } from '../../common/utils/logger';
 
@@ -36,6 +36,36 @@ export class PropertiesService {
       logger.error('Failed to update property', { error, propertyId: id });
       if (error instanceof AppError) throw error;
       throw new AppError(500, 'PROPERTY_UPDATE_FAILED', 'Failed to update property');
+    }
+  }
+
+  async addRoomType(propertyId: string, userId: string, dto: AddRoomTypeDto) {
+    const property = await this.repo.findById(propertyId);
+    if (!property) throw new NotFoundError('Property not found');
+    if (property.ownerId !== userId) throw new ForbiddenError('You do not own this property');
+    try {
+      const roomType = await this.repo.addRoomType(propertyId, dto);
+      logger.info('Room type added', { propertyId, roomTypeId: roomType.id, userId });
+      return roomType;
+    } catch (error) {
+      logger.error('Failed to add room type', { error, propertyId });
+      if (error instanceof AppError) throw error;
+      throw new AppError(500, 'ROOM_TYPE_CREATE_FAILED', 'Failed to add room type');
+    }
+  }
+
+  async addImages(propertyId: string, userId: string, dto: AddImagesDto) {
+    const property = await this.repo.findById(propertyId);
+    if (!property) throw new NotFoundError('Property not found');
+    if (property.ownerId !== userId) throw new ForbiddenError('You do not own this property');
+    try {
+      const result = await this.repo.addImages(propertyId, dto);
+      logger.info('Images added', { propertyId, count: result.count, userId });
+      return result;
+    } catch (error) {
+      logger.error('Failed to add images', { error, propertyId });
+      if (error instanceof AppError) throw error;
+      throw new AppError(500, 'IMAGES_CREATE_FAILED', 'Failed to save images');
     }
   }
 

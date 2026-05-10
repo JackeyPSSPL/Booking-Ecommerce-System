@@ -57,13 +57,17 @@ export class BookingsService {
         throw new AppError(409, 'ROOM_NOT_AVAILABLE', 'Room is no longer available');
       }
 
-      const ratePlan = dto.ratePlanId
+      let ratePlan = dto.ratePlanId
         ? hold.roomType.ratePlans.find((rp) => rp.id === dto.ratePlanId)
         : hold.roomType.ratePlans.find((rp) => rp.planType === 'STANDARD') ??
           hold.roomType.ratePlans[0];
 
       if (!ratePlan) {
-        throw new AppError(400, 'NO_RATE_PLAN', 'No rate plan available for this room');
+        // Room type was created before rate-plan auto-creation was added — backfill a STANDARD plan
+        ratePlan = await prisma.ratePlan.create({
+          data: { roomTypeId: hold.roomTypeId, planType: 'STANDARD', discountPercent: 0, minNights: 1 },
+        });
+        logger.warn('Auto-created missing STANDARD rate plan', { roomTypeId: hold.roomTypeId });
       }
 
       const nights = Math.ceil(

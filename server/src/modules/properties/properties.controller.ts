@@ -49,4 +49,22 @@ export class PropertiesController {
       next(error);
     }
   };
+
+  addRoomType = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const roomType = await this.service.addRoomType(req.params.id, req.user!.id, req.body);
+      created(res, roomType);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  addImages = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const result = await this.service.addImages(req.params.id, req.user!.id, req.body);
+      created(res, result);
+    } catch (error) {
+      next(error);
+    }
+  };
 }
