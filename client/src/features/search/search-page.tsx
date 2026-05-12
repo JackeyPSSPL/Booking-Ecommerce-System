@@ -12,19 +12,20 @@ import PageWrapper from '../../components/layout/PageWrapper';
 import Spinner from '../../components/ui/Spinner';
 import ErrorBanner from '../../components/ui/ErrorBanner';
 import PropertyCard from './property-card';
+import ChatBot from './ChatBot';
 
 // ── Static data ───────────────────────────────────────────────────────────────
 
 const EXPLORE_CITIES = [
-  { city: 'New Delhi',  count: 4, image: 'https://images.unsplash.com/photo-1587474260584-136574528ed5?w=400&q=80&auto=format&fit=crop' },
-  { city: 'Mumbai',     count: 4, image: 'https://images.unsplash.com/photo-1570168007204-dfb528c6958f?w=400&q=80&auto=format&fit=crop' },
-  { city: 'Bengaluru',  count: 4, image: 'https://images.unsplash.com/photo-1596176530529-78163a4f7af2?w=400&q=80&auto=format&fit=crop' },
-  { city: 'Jaipur',     count: 4, image: 'https://images.unsplash.com/photo-1548013146-72479768bada?w=400&q=80&auto=format&fit=crop' },
-  { city: 'Goa',        count: 4, image: 'https://images.unsplash.com/photo-1512343879784-a960bf40e7f2?w=400&q=80&auto=format&fit=crop' },
-  { city: 'Ahmedabad',  count: 4, image: 'https://images.unsplash.com/photo-1602216056096-3b40cc0c9944?w=400&q=80&auto=format&fit=crop' },
-  { city: 'Manali',     count: 4, image: 'https://images.unsplash.com/photo-1626621341517-bbf3d9990a23?w=400&q=80&auto=format&fit=crop' },
-  { city: 'Rishikesh',  count: 2, image: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&q=80&auto=format&fit=crop' },
-  { city: 'Varanasi',   count: 2, image: 'https://images.unsplash.com/photo-1543783207-ec64e4d95325?w=400&q=80&auto=format&fit=crop' },
+  { city: 'New Delhi',  image: 'https://images.unsplash.com/photo-1587474260584-136574528ed5?w=400&q=80&auto=format&fit=crop' },
+  { city: 'Mumbai',     image: 'https://images.unsplash.com/photo-1570168007204-dfb528c6958f?w=400&q=80&auto=format&fit=crop' },
+  { city: 'Bengaluru',  image: 'https://images.unsplash.com/photo-1596176530529-78163a4f7af2?w=400&q=80&auto=format&fit=crop' },
+  { city: 'Jaipur',     image: 'https://images.unsplash.com/photo-1548013146-72479768bada?w=400&q=80&auto=format&fit=crop' },
+  { city: 'Goa',        image: 'https://images.unsplash.com/photo-1512343879784-a960bf40e7f2?w=400&q=80&auto=format&fit=crop' },
+  { city: 'Ahmedabad',  image: 'https://images.unsplash.com/photo-1602216056096-3b40cc0c9944?w=400&q=80&auto=format&fit=crop' },
+  { city: 'Manali',     image: 'https://images.unsplash.com/photo-1626621341517-bbf3d9990a23?w=400&q=80&auto=format&fit=crop' },
+  { city: 'Rishikesh',  image: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&q=80&auto=format&fit=crop' },
+  { city: 'Varanasi',   image: 'https://images.unsplash.com/photo-1543783207-ec64e4d95325?w=400&q=80&auto=format&fit=crop' },
 ];
 
 const TRENDING = [
@@ -230,6 +231,7 @@ export default function SearchPage() {
   const [filters,  setFilters]  = useState<Filters>(DEFAULT_FILTERS);
   const [sort,     setSort]     = useState<SortKey>('recommended');
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [debouncedDestination, setDebouncedDestination] = useState('');
 
   const destInputRef = useRef<HTMLInputElement>(null);
   const dropdownRef  = useRef<HTMLDivElement>(null);
@@ -238,6 +240,12 @@ export default function SearchPage() {
   const activeCheckin     = searchParams.get('checkin')  ?? checkin;
   const activeCheckout    = searchParams.get('checkout') ?? checkout;
   const activeAdults      = Number(searchParams.get('adults') ?? adults);
+
+  // Debounce destination for live suggestions
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedDestination(destination.trim()), 300);
+    return () => clearTimeout(t);
+  }, [destination]);
 
   // Close dropdown on outside click
   useEffect(() => {
@@ -265,6 +273,26 @@ export default function SearchPage() {
     enabled:  !activeDestination,
     staleTime: 1000 * 60 * 10,
   });
+
+  const { data: suggestionsData } = useQuery({
+    queryKey: ['suggestions', debouncedDestination],
+    queryFn:  () => propertiesApi.suggestions(debouncedDestination),
+    enabled:  debouncedDestination.length >= 2,
+    staleTime: 1000 * 30,
+  });
+
+  const { data: destCountsData } = useQuery({
+    queryKey: ['destination-counts'],
+    queryFn:  () => propertiesApi.destinationCounts(),
+    staleTime: 1000 * 60 * 5,
+  });
+
+  const liveSuggestions: string[] = suggestionsData?.data ?? [];
+  const destCountMap = useMemo(() => {
+    const map: Record<string, number> = {};
+    (destCountsData?.data ?? []).forEach((d: { city: string; count: number }) => { map[d.city] = d.count; });
+    return map;
+  }, [destCountsData]);
 
   const featured: SearchResult[] = featuredData?.data ?? [];
   const homesLove = featured.slice(0, 4);
@@ -387,23 +415,47 @@ export default function SearchPage() {
                       <div className="border-t border-gray-100 my-1" />
                     </>
                   )}
-                  <p className="px-4 py-1.5 text-[10px] font-bold text-gray-400 uppercase tracking-wider">
-                    Trending destinations
-                  </p>
-                  {TRENDING_CITIES.map(city => (
-                    <button
-                      key={city}
-                      type="button"
-                      onClick={() => triggerSearch(city)}
-                      className="w-full flex items-center gap-3 px-4 py-2 hover:bg-gray-50 transition-colors text-left"
-                    >
-                      <span className="text-gray-400">📍</span>
-                      <div>
-                        <p className="text-sm font-medium text-gray-800">{city}</p>
-                        <p className="text-xs text-gray-400">India</p>
-                      </div>
-                    </button>
-                  ))}
+                  {debouncedDestination.length >= 2 && liveSuggestions.length > 0 ? (
+                    <>
+                      <p className="px-4 py-1.5 text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                        Suggestions
+                      </p>
+                      {liveSuggestions.map(city => (
+                        <button
+                          key={city}
+                          type="button"
+                          onClick={() => triggerSearch(city)}
+                          className="w-full flex items-center gap-3 px-4 py-2 hover:bg-gray-50 transition-colors text-left"
+                        >
+                          <span className="text-gray-400">📍</span>
+                          <div>
+                            <p className="text-sm font-medium text-gray-800">{city}</p>
+                            <p className="text-xs text-gray-400">India</p>
+                          </div>
+                        </button>
+                      ))}
+                    </>
+                  ) : (
+                    <>
+                      <p className="px-4 py-1.5 text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                        Trending destinations
+                      </p>
+                      {TRENDING_CITIES.map(city => (
+                        <button
+                          key={city}
+                          type="button"
+                          onClick={() => triggerSearch(city)}
+                          className="w-full flex items-center gap-3 px-4 py-2 hover:bg-gray-50 transition-colors text-left"
+                        >
+                          <span className="text-gray-400">📍</span>
+                          <div>
+                            <p className="text-sm font-medium text-gray-800">{city}</p>
+                            <p className="text-xs text-gray-400">India</p>
+                          </div>
+                        </button>
+                      ))}
+                    </>
+                  )}
                 </div>
               )}
             </div>
@@ -501,25 +553,29 @@ export default function SearchPage() {
           <section>
             <h2 className="text-xl font-bold text-gray-800 mb-1">Explore India</h2>
             <p className="text-sm text-gray-500 mb-5">These popular destinations have a lot to offer</p>
-            <div className="flex gap-4 overflow-x-auto pb-2 scrollbar-none">
-              {EXPLORE_CITIES.map(dest => (
-                <button
-                  key={dest.city}
-                  onClick={() => triggerSearch(dest.city)}
-                  className="group shrink-0 text-left"
-                >
-                  <div className="w-40 h-28 rounded-xl overflow-hidden bg-gray-200 mb-2">
-                    <img
-                      src={dest.image}
-                      alt={dest.city}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                      loading="lazy"
-                    />
-                  </div>
-                  <p className="font-semibold text-gray-900 text-sm">{dest.city}</p>
-                  <p className="text-xs text-gray-400">{dest.count} properties</p>
-                </button>
-              ))}
+            <div className="overflow-hidden">
+              <div className="flex w-max marquee-track">
+                {[...EXPLORE_CITIES, ...EXPLORE_CITIES].map((dest, idx) => (
+                  <button
+                    key={`${dest.city}-${idx}`}
+                    onClick={() => triggerSearch(dest.city)}
+                    className="group shrink-0 text-left pr-4"
+                  >
+                    <div className="w-40 h-28 rounded-xl overflow-hidden bg-gray-200 mb-2">
+                      <img
+                        src={dest.image}
+                        alt={dest.city}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                        loading="lazy"
+                      />
+                    </div>
+                    <p className="font-semibold text-gray-900 text-sm">{dest.city}</p>
+                    <p className="text-xs text-gray-400">
+                      {destCountMap[dest.city] !== undefined ? `${destCountMap[dest.city]} properties` : 'View properties'}
+                    </p>
+                  </button>
+                ))}
+              </div>
             </div>
           </section>
 
@@ -705,6 +761,7 @@ export default function SearchPage() {
       )}
 
       <Footer />
+      <ChatBot />
     </div>
   );
 }

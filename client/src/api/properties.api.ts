@@ -7,6 +7,9 @@ export const propertiesApi = {
   suggestions: (q: string) =>
     apiClient.get('/search/suggestions', { params: { q } }).then((r) => r.data),
 
+  destinationCounts: () =>
+    apiClient.get('/search/destinations').then((r) => r.data),
+
   getById: (id: string, params?: Record<string, string>) =>
     apiClient.get(`/properties/${id}`, { params }).then((r) => r.data),
 

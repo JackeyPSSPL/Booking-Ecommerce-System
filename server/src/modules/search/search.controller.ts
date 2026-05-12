@@ -25,4 +25,13 @@ export class SearchController {
       next(error);
     }
   };
+
+  destinationCounts = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const data = await this.service.destinationCounts();
+      ok(res, data);
+    } catch (error) {
+      next(error);
+    }
+  };
 }

@@ -1,7 +1,6 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { Toaster } from 'react-hot-toast';
 import { AppRouter } from './router';
 import './index.css';
@@ -28,7 +27,6 @@ ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
           error: { duration: 5000 },
         }}
       />
-      <ReactQueryDevtools />
     </QueryClientProvider>
   </React.StrictMode>,
 );

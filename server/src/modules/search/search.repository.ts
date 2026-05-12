@@ -106,4 +106,21 @@ export class SearchRepository {
     `);
     return (rows as { city: string }[]).map((r) => r.city);
   }
+
+  async destinationCounts(): Promise<{ city: string; count: number }[]> {
+    const rows = await prisma.$queryRaw<{ city: string; count: bigint }[]>(Prisma.sql`
+      SELECT p.city, COUNT(*)::int AS count
+      FROM properties p
+      WHERE p.status = 'ACTIVE'
+        AND EXISTS (
+          SELECT 1 FROM room_types rt WHERE rt.property_id = p.id
+        )
+      GROUP BY p.city
+      ORDER BY count DESC
+    `);
+    return (rows as { city: string; count: bigint }[]).map((r) => ({
+      city: r.city,
+      count: Number(r.count),
+    }));
+  }
 }

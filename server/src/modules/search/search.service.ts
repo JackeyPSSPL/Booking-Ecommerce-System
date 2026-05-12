@@ -25,4 +25,13 @@ export class SearchService {
       return [];
     }
   }
+
+  async destinationCounts(): Promise<{ city: string; count: number }[]> {
+    try {
+      return await this.repo.destinationCounts();
+    } catch (error) {
+      logger.error('Destination counts failed', { error });
+      return [];
+    }
+  }
 }
