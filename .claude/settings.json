@@ -18,7 +18,13 @@
       "PowerShell(Get-Process -Id 38356 -ErrorAction SilentlyContinue)",
       "Bash(tasklist /fi \"PID eq 19140\" /fo list)",
       "Bash(tasklist /fi \"PID eq 38356\" /fo list)",
-      "Bash(Get-ChildItem -Path \"e:\\\\Projects\\\\POC\\\\Booking-Ecommerce-System\\\\server\\\\src\\\\modules\\\\bookings\" -File)"
+      "Bash(Get-ChildItem -Path \"e:\\\\Projects\\\\POC\\\\Booking-Ecommerce-System\\\\server\\\\src\\\\modules\\\\bookings\" -File)",
+      "Bash(Get-ChildItem -Path \"e:\\\\Projects\\\\POC\\\\Booking-Ecommerce-System\\\\.claude\\\\skills\\\\\" -Filter \"*.md\" | Select-Object -ExpandProperty FullName)",
+      "Bash(grep \".md$\")",
+      "Bash(flutter --version)",
+      "Bash(flutter create *)",
+      "Bash(flutter pub *)",
+      "Bash(flutter analyze *)"
     ]
   }
 }
