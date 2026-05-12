@@ -127,6 +127,16 @@ class _PropertyDetailPageState extends State<PropertyDetailPage> {
         expandedHeight: 240,
         pinned: true,
         backgroundColor: AppColors.primary,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          onPressed: () {
+            if (context.canPop()) {
+              context.pop();
+            } else {
+              context.goNamed('home');
+            }
+          },
+        ),
         flexibleSpace: FlexibleSpaceBar(
           background: Container(
             color: const Color(0xFFE8EDF5),
@@ -143,6 +153,16 @@ class _PropertyDetailPageState extends State<PropertyDetailPage> {
       expandedHeight: 260,
       pinned: true,
       backgroundColor: AppColors.primary,
+      leading: IconButton(
+        icon: const Icon(Icons.arrow_back, color: Colors.white),
+        onPressed: () {
+          if (context.canPop()) {
+            context.pop();
+          } else {
+            context.goNamed('home');
+          }
+        },
+      ),
       flexibleSpace: FlexibleSpaceBar(
         background: Stack(
           children: [
@@ -369,7 +389,7 @@ class _PropertyDetailPageState extends State<PropertyDetailPage> {
       return;
     }
 
-    context.goNamed(
+    context.pushNamed(
       'guestDetails',
       extra: {
         'roomTypeId': roomType.id,

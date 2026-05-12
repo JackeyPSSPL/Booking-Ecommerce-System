@@ -67,23 +67,27 @@ class _RegisterPageState extends State<RegisterPage> {
             );
         }
       },
-      child: Scaffold(
-        backgroundColor: AppColors.background,
-        body: SafeArea(
-          child: Center(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(24),
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 440),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    _buildHeader(),
-                    const SizedBox(height: 32),
-                    _buildCard(),
-                    const SizedBox(height: 24),
-                    _buildLoginLink(),
-                  ],
+      child: GestureDetector(
+        onTap: () => FocusScope.of(context).unfocus(),
+        behavior: HitTestBehavior.opaque,
+        child: Scaffold(
+          backgroundColor: AppColors.background,
+          body: SafeArea(
+            child: Center(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(24),
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 440),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      _buildHeader(),
+                      const SizedBox(height: 32),
+                      _buildCard(),
+                      const SizedBox(height: 24),
+                      _buildLoginLink(),
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -96,22 +100,28 @@ class _RegisterPageState extends State<RegisterPage> {
   Widget _buildHeader() {
     return Column(
       children: [
-        Container(
-          width: 56,
-          height: 56,
-          decoration: BoxDecoration(
-            color: AppColors.primary,
-            borderRadius: BorderRadius.circular(14),
-          ),
-          child: const Center(
-            child: Text(
-              'S',
-              style: TextStyle(
-                fontSize: 32,
-                fontWeight: FontWeight.w900,
-                color: Colors.white,
+        // StayBook Logo
+        RichText(
+          text: const TextSpan(
+            children: [
+              TextSpan(
+                text: 'StayBook',
+                style: TextStyle(
+                  fontSize: 32,
+                  fontWeight: FontWeight.w900,
+                  color: AppColors.primary,
+                  letterSpacing: -0.5,
+                ),
               ),
-            ),
+              TextSpan(
+                text: ' .',
+                style: TextStyle(
+                  fontSize: 32,
+                  fontWeight: FontWeight.w900,
+                  color: AppColors.accent,
+                ),
+              ),
+            ],
           ),
         ),
         const SizedBox(height: 16),

@@ -42,26 +42,41 @@ class _HomePageState extends State<HomePage> {
           },
           child: Scaffold(
             backgroundColor: AppColors.background,
-            body: CustomScrollView(
-              slivers: [
-                _buildAppBar(context, isResults, state),
-                SliverToBoxAdapter(child: _buildSearchBar(state)),
-                if (state is SearchLoading)
-                  const SliverFillRemaining(
-                    child: Center(
-                      child: CircularProgressIndicator(
-                        valueColor:
-                            AlwaysStoppedAnimation<Color>(AppColors.primary),
+            body: RefreshIndicator(
+              color: AppColors.primary,
+              // displace the spinner so it shows just below the search card,
+              // not at the very top above the app bar
+              displacement: 16,
+              edgeOffset: 0,
+              onRefresh: () async {
+                context.read<SearchBloc>().add(const SearchInitialised());
+                await Future.delayed(const Duration(milliseconds: 800));
+              },
+              child: CustomScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                slivers: [
+                  _buildAppBar(context, isResults, state),
+                  SliverToBoxAdapter(child: _buildSearchBar(state)),
+                  if (state is SearchLoading)
+                    const SliverFillRemaining(
+                      child: Center(
+                        child: CircularProgressIndicator(
+                          valueColor:
+                              AlwaysStoppedAnimation<Color>(AppColors.primary),
+                        ),
                       ),
-                    ),
-                  )
-                else if (state is SearchError)
-                  SliverFillRemaining(child: _buildError(state.message))
-                else if (state is SearchHomeLoaded)
-                  SliverToBoxAdapter(child: _buildExploreSection(state))
-                else if (state is SearchResultsLoaded)
-                  SliverToBoxAdapter(child: _buildResults(state)),
-              ],
+                    )
+                  else if (state is SearchError)
+                    SliverFillRemaining(child: _buildError(state.message))
+                  else if (state is SearchHomeLoaded)
+                    SliverFillRemaining(
+                      hasScrollBody: false,
+                      child: _buildExploreSection(state),
+                    )
+                  else if (state is SearchResultsLoaded)
+                    SliverToBoxAdapter(child: _buildResults(state)),
+                ],
+              ),
             ),
           ),
         );
@@ -130,10 +145,7 @@ class _HomePageState extends State<HomePage> {
                 },
               ),
               GestureDetector(
-                onTap: () {
-                  context.read<AuthBloc>().add(const LogoutRequested());
-                  context.goNamed('login');
-                },
+                onTap: () => context.pushNamed('profile'),
                 child: Container(
                   width: 36,
                   height: 36,
@@ -158,7 +170,12 @@ class _HomePageState extends State<HomePage> {
         : null;
     return Padding(
       padding: const EdgeInsets.only(top: 16, bottom: 8),
-      child: SearchBarWidget(initialDestination: initialDest),
+      child: SearchBarWidget(
+        // Key forces widget to fully rebuild (fresh initState) when
+        // returning from results → home, clearing the destination text.
+        key: ValueKey(initialDest ?? '__home_fresh__'),
+        initialDestination: initialDest,
+      ),
     );
   }
 
@@ -228,7 +245,7 @@ class _HomePageState extends State<HomePage> {
                 itemCount: state.featured.length,
                 itemBuilder: (context, i) => FeaturedPropertyCard(
                   property: state.featured[i],
-                  onTap: () => context.goNamed(
+                  onTap: () => context.pushNamed(
                     'propertyDetail',
                     pathParameters: {'id': state.featured[i].id},
                     extra: {
@@ -276,7 +293,7 @@ class _HomePageState extends State<HomePage> {
             .map(
               (p) => PropertyListCard(
                 property: p,
-                onTap: () => context.goNamed(
+                onTap: () => context.pushNamed(
                   'propertyDetail',
                   pathParameters: {'id': p.id},
                   extra: {

@@ -6,6 +6,7 @@ import '../../features/auth/presentation/bloc/auth_bloc.dart';
 import '../../features/auth/presentation/bloc/auth_state.dart';
 import '../../features/auth/presentation/pages/login_page.dart';
 import '../../features/auth/presentation/pages/otp_page.dart';
+import '../../features/auth/presentation/pages/profile_page.dart';
 import '../../features/auth/presentation/pages/register_page.dart';
 import '../../features/auth/presentation/pages/splash_page.dart';
 import '../../features/checkout/domain/entities/booking_entity.dart';
@@ -39,10 +40,29 @@ class _StreamChangeNotifier extends ChangeNotifier {
   }
 }
 
+/// Dismisses the software keyboard on every route push, pop, replace, or remove.
+/// This prevents the keyboard from persisting when navigating between screens.
+class _KeyboardDismissObserver extends NavigatorObserver {
+  void _dismiss() => FocusManager.instance.primaryFocus?.unfocus();
+
+  @override
+  void didPush(Route route, Route? previousRoute) => _dismiss();
+
+  @override
+  void didPop(Route route, Route? previousRoute) => _dismiss();
+
+  @override
+  void didReplace({Route? newRoute, Route? oldRoute}) => _dismiss();
+
+  @override
+  void didRemove(Route route, Route? previousRoute) => _dismiss();
+}
+
 GoRouter buildAppRouter() {
   final authBloc = sl<AuthBloc>();
   return GoRouter(
     initialLocation: '/splash',
+    observers: [_KeyboardDismissObserver()],
     refreshListenable: _StreamChangeNotifier(authBloc.stream),
     redirect: (BuildContext context, GoRouterState state) {
       final isAuthenticated = sl<AuthBloc>().state is AuthAuthenticated;
@@ -87,6 +107,11 @@ GoRouter buildAppRouter() {
           create: (_) => sl<SearchBloc>(),
           child: const HomePage(),
         ),
+      ),
+      GoRoute(
+        name: 'profile',
+        path: '/profile',
+        builder: (_, __) => const ProfilePage(),
       ),
       GoRoute(
         name: 'propertyDetail',

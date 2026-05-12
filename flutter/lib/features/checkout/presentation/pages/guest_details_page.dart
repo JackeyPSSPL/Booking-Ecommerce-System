@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/utils/currency_utils.dart';
 import '../../../../core/utils/date_utils.dart' as du;
+import '../../../../features/auth/presentation/bloc/auth_bloc.dart';
+import '../../../../features/auth/presentation/bloc/auth_state.dart';
 import '../cubit/checkout_cubit.dart';
 
 class GuestDetailsPage extends StatefulWidget {
@@ -48,6 +51,7 @@ class _GuestDetailsPageState extends State<GuestDetailsPage> {
   final _specialRequestsCtrl = TextEditingController();
   String? _arrivalTime;
   bool _holdSucceeded = false;
+  bool _autovalidate = false;
 
   static const _arrivalOptions = [
     'Before 12:00',
@@ -62,6 +66,11 @@ class _GuestDetailsPageState extends State<GuestDetailsPage> {
   @override
   void initState() {
     super.initState();
+    // Pre-fill email from logged-in user
+    final authState = context.read<AuthBloc>().state;
+    if (authState is AuthAuthenticated) {
+      _emailCtrl.text = authState.user.email;
+    }
     widget.cubit.createHold(
       roomTypeId: widget.roomTypeId,
       propertyId: widget.propertyId,
@@ -89,8 +98,11 @@ class _GuestDetailsPageState extends State<GuestDetailsPage> {
       );
 
   void _onContinue(String holdId) {
+    setState(() => _autovalidate = true);
     if (!_formKey.currentState!.validate()) return;
-    context.goNamed(
+    // Dismiss keyboard before navigating
+    FocusScope.of(context).unfocus();
+    context.pushNamed(
       'payment',
       extra: {
         'cubit': widget.cubit,
@@ -154,7 +166,11 @@ class _GuestDetailsPageState extends State<GuestDetailsPage> {
                   )
                 : (state is CheckoutError && !_holdSucceeded)
                     ? _buildHoldError(state.message)
-                    : _buildForm(state),
+                    : GestureDetector(
+                        onTap: () => FocusScope.of(context).unfocus(),
+                        behavior: HitTestBehavior.opaque,
+                        child: _buildForm(state),
+                      ),
           );
         },
       ),
@@ -212,6 +228,9 @@ class _GuestDetailsPageState extends State<GuestDetailsPage> {
           const SizedBox(height: 12),
           Form(
             key: _formKey,
+            autovalidateMode: _autovalidate
+                ? AutovalidateMode.onUserInteraction
+                : AutovalidateMode.disabled,
             child: Column(
               children: [
                 Row(
@@ -227,12 +246,24 @@ class _GuestDetailsPageState extends State<GuestDetailsPage> {
                     keyboardType: TextInputType.emailAddress,
                     validator: (v) {
                       if (v == null || v.isEmpty) return 'Required';
-                      if (!v.contains('@')) return 'Invalid email';
+                      if (!v.contains('@') || !v.contains('.'))
+                        return 'Enter a valid email address';
                       return null;
                     }),
                 const SizedBox(height: 12),
-                _field(_phoneCtrl, 'Phone number',
-                    required: true, keyboardType: TextInputType.phone),
+                _field(_phoneCtrl, 'Mobile number',
+                    required: true,
+                    keyboardType: TextInputType.phone,
+                    maxLength: 10,
+                    digitsOnly: true,
+                    validator: (v) {
+                      if (v == null || v.trim().isEmpty) return 'Required';
+                      final digits = v.trim().replaceAll(RegExp(r'^(\+91|0)'), '');
+                      if (digits.length != 10 || !RegExp(r'^[6-9]\d{9}$').hasMatch(digits)) {
+                        return 'Enter a valid 10-digit Indian mobile number';
+                      }
+                      return null;
+                    }),
                 const SizedBox(height: 12),
                 _field(_countryCtrl, 'Country', required: true),
                 const SizedBox(height: 12),
@@ -346,17 +377,24 @@ class _GuestDetailsPageState extends State<GuestDetailsPage> {
     bool required = false,
     TextInputType keyboardType = TextInputType.text,
     int maxLines = 1,
+    int? maxLength,
+    bool digitsOnly = false,
     String? Function(String?)? validator,
   }) {
     return TextFormField(
       controller: ctrl,
       keyboardType: keyboardType,
       maxLines: maxLines,
+      maxLength: maxLength,
+      inputFormatters: digitsOnly
+          ? [FilteringTextInputFormatter.digitsOnly]
+          : null,
       decoration: InputDecoration(
         labelText: label,
         labelStyle: const TextStyle(fontSize: 13, color: AppColors.muted),
         filled: true,
         fillColor: Colors.white,
+        counterStyle: const TextStyle(fontSize: 11, color: AppColors.muted),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
           borderSide: const BorderSide(color: AppColors.border),

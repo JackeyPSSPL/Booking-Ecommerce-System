@@ -47,6 +47,8 @@ class SearchRepositoryImpl implements SearchRepository {
       return Left(ServerFailure(e.message));
     } on SocketException {
       return const Left(NetworkFailure());
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
     }
   }
 
@@ -59,6 +61,8 @@ class SearchRepositoryImpl implements SearchRepository {
       return Left(ServerFailure(e.message));
     } on SocketException {
       return const Left(NetworkFailure());
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
     }
   }
 }

@@ -20,6 +20,8 @@ class PropertyRepositoryImpl implements PropertyRepository {
       return Left(ServerFailure(e.message));
     } on SocketException {
       return const Left(NetworkFailure());
+    } catch (e) {
+      return Left(ServerFailure(e.toString()));
     }
   }
 }

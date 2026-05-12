@@ -16,7 +16,7 @@ class RatePlanModel {
   factory RatePlanModel.fromJson(Map<String, dynamic> json) => RatePlanModel(
         id: json['id'] as String,
         planType: json['planType'] as String,
-        discountPercent: (json['discountPercent'] as num).toDouble(),
+        discountPercent: double.parse(json['discountPercent'].toString()),
         minNights: (json['minNights'] as num).toInt(),
       );
 

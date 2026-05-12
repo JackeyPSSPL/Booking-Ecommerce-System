@@ -60,6 +60,8 @@ class _SearchBarWidgetState extends State<SearchBarWidget> {
   }
 
   Future<void> _pickDate(bool isCheckin) async {
+    // Dismiss keyboard when opening date picker
+    FocusScope.of(context).unfocus();
     final now = DateTime.now();
     final picked = await showDatePicker(
       context: context,
@@ -99,6 +101,8 @@ class _SearchBarWidgetState extends State<SearchBarWidget> {
       );
       return;
     }
+    // Dismiss keyboard before navigating to results
+    FocusScope.of(context).unfocus();
     setState(() => _showSuggestions = false);
     context.read<SearchBloc>().add(
           SearchSubmitted(
@@ -128,45 +132,49 @@ class _SearchBarWidgetState extends State<SearchBarWidget> {
           ),
         ],
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          _buildDestinationField(),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(child: _buildDateTile('Check-in', _checkin, true)),
-              Container(
-                width: 1,
-                height: 36,
-                color: AppColors.border,
-                margin: const EdgeInsets.symmetric(horizontal: 8),
-              ),
-              Expanded(child: _buildDateTile('Check-out', _checkout, false)),
-            ],
-          ),
-          const SizedBox(height: 12),
-          _buildAdultsRow(),
-          const SizedBox(height: 14),
-          SizedBox(
-            height: 46,
-            child: ElevatedButton.icon(
-              onPressed: _submit,
-              icon: const Icon(Icons.search, size: 18),
-              label: const Text(
-                'Search',
-                style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
-              ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
+      child: GestureDetector(
+        onTap: () => FocusScope.of(context).unfocus(),
+        behavior: HitTestBehavior.opaque,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            _buildDestinationField(),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(child: _buildDateTile('Check-in', _checkin, true)),
+                Container(
+                  width: 1,
+                  height: 36,
+                  color: AppColors.border,
+                  margin: const EdgeInsets.symmetric(horizontal: 8),
+                ),
+                Expanded(child: _buildDateTile('Check-out', _checkout, false)),
+              ],
+            ),
+            const SizedBox(height: 12),
+            _buildAdultsRow(),
+            const SizedBox(height: 14),
+            SizedBox(
+              height: 46,
+              child: ElevatedButton.icon(
+                onPressed: _submit,
+                icon: const Icon(Icons.search, size: 18),
+                label: const Text(
+                  'Search',
+                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
                 ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

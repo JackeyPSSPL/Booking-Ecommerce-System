@@ -37,19 +37,23 @@ class SearchBloc extends Bloc<SearchEvent, SearchState> {
       return;
     }
     emit(const SearchLoading());
-    final results = await Future.wait([
-      _getDestinations(),
-      _getFeatured(),
-    ]);
-    final destResult = results[0] as dynamic;
-    final featResult = results[1] as dynamic;
-    if (destResult.isLeft()) {
-      emit(SearchError((destResult as dynamic).fold((f) => f.message, (_) => '')));
-      return;
+    try {
+      final results = await Future.wait([
+        _getDestinations(),
+        _getFeatured(),
+      ]);
+      final destResult = results[0] as dynamic;
+      final featResult = results[1] as dynamic;
+      if (destResult.isLeft()) {
+        emit(SearchError((destResult as dynamic).fold((f) => f.message, (_) => '')));
+        return;
+      }
+      _cachedDestinations = destResult.getOrElse(() => <DestinationEntity>[]) as List<DestinationEntity>;
+      _cachedFeatured = featResult.getOrElse(() => <SearchResultEntity>[]) as List<SearchResultEntity>;
+      emit(SearchHomeLoaded(_cachedDestinations, featured: _cachedFeatured));
+    } catch (e) {
+      emit(SearchError("An unexpected error occurred: $e"));
     }
-    _cachedDestinations = destResult.getOrElse(() => []) as List<DestinationEntity>;
-    _cachedFeatured = featResult.getOrElse(() => []) as List<SearchResultEntity>;
-    emit(SearchHomeLoaded(_cachedDestinations, featured: _cachedFeatured));
   }
 
   Future<void> _onSubmitted(

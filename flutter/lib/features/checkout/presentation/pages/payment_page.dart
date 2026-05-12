@@ -64,6 +64,8 @@ class _PaymentPageState extends State<PaymentPage> {
 
   void _onPay() {
     if (!_formKey.currentState!.validate()) return;
+    // Dismiss keyboard before processing payment
+    FocusScope.of(context).unfocus();
     final rawCard = _cardNumberCtrl.text.replaceAll(' ', '');
     widget.cubit.submitBooking(
       holdId: widget.holdId,
@@ -87,7 +89,7 @@ class _PaymentPageState extends State<PaymentPage> {
       child: BlocConsumer<CheckoutCubit, CheckoutState>(
         listener: (context, state) {
           if (state is BookingSuccess) {
-            context.goNamed('confirmation', extra: {
+            context.pushNamed('confirmation', extra: {
               'booking': state.booking,
               'propertyName': widget.propertyName,
               'roomTypeName': widget.roomTypeName,
@@ -113,7 +115,10 @@ class _PaymentPageState extends State<PaymentPage> {
                 style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
               ),
             ),
-            body: SingleChildScrollView(
+            body: GestureDetector(
+              onTap: () => FocusScope.of(context).unfocus(),
+              behavior: HitTestBehavior.opaque,
+              child: SingleChildScrollView(
               padding: const EdgeInsets.all(16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -192,6 +197,7 @@ class _PaymentPageState extends State<PaymentPage> {
                   ),
                   const SizedBox(height: 24),
                 ],
+              ),
               ),
             ),
           );

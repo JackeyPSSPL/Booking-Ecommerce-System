@@ -21,7 +21,7 @@ class _TripsPageState extends State<TripsPage>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
+    _tabController = TabController(length: 2, vsync: this);
     context.read<TripsBloc>().add(const TripsInitialised());
   }
 
@@ -50,6 +50,16 @@ class _TripsPageState extends State<TripsPage>
           appBar: AppBar(
             backgroundColor: AppColors.primary,
             foregroundColor: Colors.white,
+            leading: IconButton(
+              icon: const Icon(Icons.arrow_back, color: Colors.white),
+              onPressed: () {
+                if (context.canPop()) {
+                  context.pop();
+                } else {
+                  context.goNamed('home');
+                }
+              },
+            ),
             title: const Text(
               'My Trips',
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
@@ -61,11 +71,7 @@ class _TripsPageState extends State<TripsPage>
               unselectedLabelColor: Colors.white60,
               labelStyle: const TextStyle(
                   fontSize: 13, fontWeight: FontWeight.w600),
-              tabs: const [
-                Tab(text: 'Upcoming'),
-                Tab(text: 'Past'),
-                Tab(text: 'Cancelled'),
-              ],
+              tabs: _buildTabs(state),
             ),
           ),
           body: switch (state) {
@@ -76,7 +82,7 @@ class _TripsPageState extends State<TripsPage>
                 ),
               ),
             TripsError(:final message) => _buildError(message),
-            TripsLoaded() => _buildTabs(state),
+            TripsLoaded() => _buildTabContent(state),
             _ => const SizedBox.shrink(),
           },
         );
@@ -84,14 +90,66 @@ class _TripsPageState extends State<TripsPage>
     );
   }
 
-  Widget _buildTabs(TripsLoaded state) {
+  /// Builds tab labels — shows count badge when data is loaded.
+  List<Widget> _buildTabs(TripsState state) {
+    if (state is! TripsLoaded) {
+      return const [
+        Tab(text: 'Past'),
+        Tab(text: 'Cancelled'),
+      ];
+    }
+    final pastCount = [
+      ...state.upcoming,
+      ...state.past,
+    ].where((b) => b.status == 'CONFIRMED').length;
+    final cancelCount = state.cancelled.length;
+    return [
+      _tabLabel('Past', pastCount),
+      _tabLabel('Cancelled', cancelCount),
+    ];
+  }
+
+  Widget _tabLabel(String label, int count) {
+    return Tab(
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(label),
+          if (count > 0) ...
+            [
+              const SizedBox(width: 6),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.25),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Text(
+                  '$count',
+                  style: const TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTabContent(TripsLoaded state) {
+    // Only CONFIRMED bookings in Past tab (excludes cancelled, pending etc.)
+    final confirmedBookings = [
+      ...state.upcoming,
+      ...state.past,
+    ].where((b) => b.status == 'CONFIRMED').toList();
+
     return TabBarView(
       controller: _tabController,
       children: [
-        _buildList(state.upcoming, state, emptyMsg: 'No upcoming trips'),
-        _buildList(state.past, state, emptyMsg: 'No past trips'),
-        _buildList(state.cancelled, state,
-            emptyMsg: 'No cancelled bookings'),
+        _buildList(confirmedBookings, state, emptyMsg: 'No past bookings'),
+        _buildList(state.cancelled, state, emptyMsg: 'No cancelled bookings'),
       ],
     );
   }
@@ -126,7 +184,7 @@ class _TripsPageState extends State<TripsPage>
         itemBuilder: (_, i) => _BookingCard(
           booking: items[i],
           isCancelling: state.cancellingId == items[i].id,
-          onTap: () => context.goNamed(
+          onTap: () => context.pushNamed(
             'tripDetail',
             extra: {
               'booking': items[i],
@@ -188,7 +246,7 @@ class _BookingCard extends StatelessWidget {
   String get _statusLabel {
     switch (booking.status) {
       case 'CONFIRMED':
-        return booking.isUpcoming ? 'Upcoming' : 'Completed';
+        return 'Confirmed';
       case 'CANCELLED':
         return 'Cancelled';
       default:
