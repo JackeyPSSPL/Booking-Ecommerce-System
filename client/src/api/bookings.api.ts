@@ -25,11 +25,9 @@ export const bookingsApi = {
       arrivalTime?: string;
     };
     payment: {
-      cardholderName: string;
-      cardNumber: string;
-      expiry: string;
-      cvc: string;
-      simulateFailure?: boolean;
+      razorpayOrderId: string;
+      razorpayPaymentId: string;
+      razorpaySignature: string;
     };
   }) => apiClient.post('/bookings', data).then((r) => r.data),
 

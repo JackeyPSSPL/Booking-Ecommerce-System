@@ -129,3 +129,9 @@ export interface ApiError {
   };
 }
 
+export interface RazorpayOrder {
+  orderId: string;
+  amount: number;
+  currency: string;
+  keyId: string;
+}

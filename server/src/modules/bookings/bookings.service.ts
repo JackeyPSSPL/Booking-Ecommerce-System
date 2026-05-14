@@ -3,9 +3,9 @@ import { Prisma } from '@prisma/client';
 import { BookingsRepository } from './bookings.repository';
 import { CreateHoldDto, CreateBookingDto } from './bookings.schema';
 import { AppError, NotFoundError, ForbiddenError, PaymentError } from '../../common/errors/app-error';
-import { simulatePayment } from '../../utils/payment.util';
 import { sendBookingConfirmation } from '../../utils/email.util';
 import { logger } from '../../common/utils/logger';
+import { config } from '../../config/env';
 import { prisma } from '../../config/prisma';
 
 export class BookingsService {
@@ -57,6 +57,36 @@ export class BookingsService {
         throw new AppError(409, 'ROOM_NOT_AVAILABLE', 'Room is no longer available');
       }
 
+      // Razorpay HMAC-SHA256 signature verification
+      const { razorpayOrderId, razorpayPaymentId, razorpaySignature } = dto.payment;
+      const expectedSig = crypto
+        .createHmac('sha256', config.RAZORPAY_KEY_SECRET)
+        .update(`${razorpayOrderId}|${razorpayPaymentId}`)
+        .digest('hex');
+
+      const sigBuffer = Buffer.from(razorpaySignature, 'hex');
+      const expectedBuffer = Buffer.from(expectedSig, 'hex');
+
+      let signatureValid = false;
+      if (sigBuffer.length === expectedBuffer.length) {
+        signatureValid = crypto.timingSafeEqual(sigBuffer, expectedBuffer);
+      }
+
+      if (!signatureValid) {
+        logger.warn('Razorpay signature verification failed', {
+          razorpayOrderId,
+          razorpayPaymentId,
+          userId,
+        });
+        throw new PaymentError('Payment verification failed. Please contact support.');
+      }
+
+      logger.info('Razorpay signature verified', {
+        razorpayOrderId,
+        razorpayPaymentId,
+        userId,
+      });
+
       let ratePlan = dto.ratePlanId
         ? hold.roomType.ratePlans.find((rp) => rp.id === dto.ratePlanId)
         : hold.roomType.ratePlans.find((rp) => rp.planType === 'STANDARD') ??
@@ -77,17 +107,6 @@ export class BookingsService {
       const discount = Number(ratePlan.discountPercent) / 100;
       const totalPrice = new Prisma.Decimal((basePrice * nights * (1 - discount)).toFixed(2));
 
-      const cardLast4 = dto.payment.cardNumber.slice(-4);
-      const paymentResult = simulatePayment({
-        cardholderName: dto.payment.cardholderName,
-        cardNumberLast4: cardLast4,
-        simulateFailure: dto.payment.simulateFailure,
-      });
-
-      if (!paymentResult.success) {
-        throw new PaymentError(paymentResult.failureReason ?? 'Payment declined');
-      }
-
       const confirmationNumber = `BK${Date.now().toString(36).toUpperCase()}${crypto.randomBytes(3).toString('hex').toUpperCase()}`;
       const pin = Math.floor(1000 + Math.random() * 9000).toString();
 
@@ -103,7 +122,7 @@ export class BookingsService {
         totalPrice,
         confirmationNumber,
         pin,
-        paymentTransactionId: paymentResult.transactionId,
+        paymentTransactionId: razorpayPaymentId,
         guestName: `${dto.guestDetails.firstName} ${dto.guestDetails.lastName}`,
         guestEmail: dto.guestDetails.email,
         guestPhone: dto.guestDetails.phone,
@@ -111,8 +130,7 @@ export class BookingsService {
         specialRequests: dto.guestDetails.specialRequests,
         arrivalTime: dto.guestDetails.arrivalTime,
         holdId: dto.holdId,
-        cardholderName: dto.payment.cardholderName,
-        cardLastFour: cardLast4,
+        razorpayOrderId,
       });
 
       logger.info('Booking created', { bookingId: booking.id, userId, confirmationNumber });
