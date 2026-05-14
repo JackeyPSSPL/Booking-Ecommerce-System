@@ -1,6 +1,8 @@
 # Server — CLAUDE.md
 > Express + TypeScript + Prisma · Booking.com Clone MVP · Port 3001
 
+> **Serves Both**: Web (React at port 3000) and Mobile (Flutter) clients. All data shared via JWT auth.
+
 ---
 
 ## Quick Start

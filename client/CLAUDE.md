@@ -1,6 +1,8 @@
 # Client — CLAUDE.md
 > React 18 + Vite + TypeScript + Tailwind · Booking.com Clone MVP · Port 3000
 
+> **Flutter Mobile App**: See `../flutter/CLAUDE.md`. Same backend, same JWT auth, same data.
+
 ---
 
 ## Quick Start
