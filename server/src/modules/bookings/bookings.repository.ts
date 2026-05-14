@@ -52,8 +52,7 @@ export class BookingsRepository {
     specialRequests?: string;
     arrivalTime?: string;
     holdId: string;
-    cardholderName: string;
-    cardLastFour: string;
+    razorpayOrderId: string;
   }) {
     const dates = getDatesInRange(data.checkin, data.checkout);
 
@@ -103,8 +102,8 @@ export class BookingsRepository {
         data: {
           bookingId: booking.id,
           transactionId: data.paymentTransactionId,
-          cardholderName: data.cardholderName,
-          cardLastFour: data.cardLastFour,
+          cardholderName: data.razorpayOrderId,
+          cardLastFour: 'RZPY',
           simulatedFailure: false,
           success: true,
         },

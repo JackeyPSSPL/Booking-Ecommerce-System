@@ -11,6 +11,8 @@ const envSchema = z.object({
   JWT_SECRET:               z.string().min(20),
   JWT_EXPIRATION:           z.string().default('1h'),
   JWT_REFRESH_SECRET:       z.string().min(20),
+  RAZORPAY_KEY_ID:          z.string().min(1),
+  RAZORPAY_KEY_SECRET:      z.string().min(1),
   AWS_REGION:               z.string().optional(),
   AWS_ACCESS_KEY_ID:        z.string().optional(),
   AWS_SECRET_ACCESS_KEY:    z.string().optional(),

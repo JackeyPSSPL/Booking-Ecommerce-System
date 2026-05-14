@@ -25,11 +25,9 @@ export const guestDetailsSchema = z.object({
 });
 
 export const paymentSchema = z.object({
-  cardholderName: z.string().min(2),
-  cardNumber: z.string().regex(/^\d{16}$/, 'Enter 16 digits'),
-  expiry: z.string().regex(/^\d{2}\/\d{2}$/, 'Format: MM/YY'),
-  cvc: z.string().regex(/^\d{3}$/, '3-digit CVC required'),
-  simulateFailure: z.boolean().optional(),
+  razorpayOrderId: z.string().min(1, 'Razorpay order ID is required'),
+  razorpayPaymentId: z.string().min(1, 'Razorpay payment ID is required'),
+  razorpaySignature: z.string().min(1, 'Razorpay signature is required'),
 });
 
 export const createBookingSchema = z.object({
