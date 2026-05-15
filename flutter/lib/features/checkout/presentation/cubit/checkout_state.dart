@@ -43,3 +43,26 @@ class CheckoutError extends CheckoutState {
   @override
   List<Object?> get props => [message];
 }
+
+class PaymentOrderLoading extends CheckoutState {
+  const PaymentOrderLoading();
+  @override
+  List<Object?> get props => [];
+}
+
+class PaymentOrderReady extends CheckoutState {
+  final String orderId;
+  final int amount; // paise, passed directly to Razorpay.open()
+  final String currency;
+  final String keyId;
+
+  const PaymentOrderReady({
+    required this.orderId,
+    required this.amount,
+    required this.currency,
+    required this.keyId,
+  });
+
+  @override
+  List<Object?> get props => [orderId, amount, currency, keyId];
+}

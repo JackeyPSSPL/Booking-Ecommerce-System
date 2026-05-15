@@ -28,6 +28,7 @@ import 'features/checkout/data/repositories/booking_repository_impl.dart';
 import 'features/checkout/domain/repositories/checkout_repository.dart';
 import 'features/checkout/domain/usecases/create_hold_usecase.dart';
 import 'features/checkout/domain/usecases/create_booking_usecase.dart';
+import 'features/checkout/domain/usecases/create_payment_order_usecase.dart';
 import 'features/checkout/presentation/cubit/checkout_cubit.dart';
 import 'features/trips/data/datasources/trips_remote_datasource.dart';
 import 'features/trips/data/repositories/trips_repository_impl.dart';
@@ -105,7 +106,8 @@ Future<void> init() async {
   );
   sl.registerLazySingleton(() => CreateHoldUseCase(sl()));
   sl.registerLazySingleton(() => CreateBookingUseCase(sl()));
-  sl.registerFactory<CheckoutCubit>(() => CheckoutCubit(sl(), sl()));
+  sl.registerLazySingleton(() => CreatePaymentOrderUseCase(sl()));
+  sl.registerFactory<CheckoutCubit>(() => CheckoutCubit(sl(), sl(), sl()));
 
   // ── Trips ─────────────────────────────────────────────────────────────────
   sl.registerLazySingleton<TripsRemoteDataSource>(

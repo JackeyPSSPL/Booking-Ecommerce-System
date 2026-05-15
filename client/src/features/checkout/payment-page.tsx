@@ -87,7 +87,7 @@ export default function PaymentPage() {
       key: orderData.keyId,
       amount: orderData.amount,
       currency: orderData.currency,
-      name: 'Booking.com Clone',
+      name: 'StayBook',
       description: `Stay: ${formatDate(roomSelection.checkin)} – ${formatDate(roomSelection.checkout)}`,
       order_id: orderData.orderId,
       prefill: {
