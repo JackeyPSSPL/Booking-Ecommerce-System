@@ -3,14 +3,16 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../domain/entities/booking_entity.dart';
 import '../../domain/usecases/create_booking_usecase.dart';
 import '../../domain/usecases/create_hold_usecase.dart';
+import '../../domain/usecases/create_payment_order_usecase.dart';
 
 part 'checkout_state.dart';
 
 class CheckoutCubit extends Cubit<CheckoutState> {
   final CreateHoldUseCase _createHold;
   final CreateBookingUseCase _createBooking;
+  final CreatePaymentOrderUseCase _createPaymentOrder;
 
-  CheckoutCubit(this._createHold, this._createBooking)
+  CheckoutCubit(this._createHold, this._createBooking, this._createPaymentOrder)
       : super(const CheckoutInitial());
 
   Future<void> createHold({
@@ -56,6 +58,26 @@ class CheckoutCubit extends Cubit<CheckoutState> {
     result.fold(
       (failure) => emit(CheckoutError(failure.message)),
       (booking) => emit(BookingSuccess(booking)),
+    );
+  }
+
+  Future<void> createPaymentOrder({
+    required double totalPriceInRupees,
+    required String holdId,
+  }) async {
+    emit(const PaymentOrderLoading());
+    final result = await _createPaymentOrder(PaymentOrderParams(
+      amountInRupees: totalPriceInRupees,
+      holdId: holdId,
+    ));
+    result.fold(
+      (failure) => emit(CheckoutError(failure.message)),
+      (order) => emit(PaymentOrderReady(
+        orderId: order.orderId,
+        amount: order.amount,
+        currency: order.currency,
+        keyId: order.keyId,
+      )),
     );
   }
 }

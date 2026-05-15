@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import 'package:razorpay_flutter/razorpay_flutter.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/utils/currency_utils.dart';
 import '../../../../core/utils/date_utils.dart' as du;
@@ -40,18 +40,21 @@ class PaymentPage extends StatefulWidget {
 }
 
 class _PaymentPageState extends State<PaymentPage> {
-  final _formKey = GlobalKey<FormState>();
-  final _cardholderCtrl = TextEditingController();
-  final _cardNumberCtrl = TextEditingController();
-  final _expiryCtrl = TextEditingController();
-  final _cvcCtrl = TextEditingController();
+  late final Razorpay _razorpay;
+  String? _pendingOrderId; // fallback for nullable PaymentSuccessResponse.orderId
+
+  @override
+  void initState() {
+    super.initState();
+    _razorpay = Razorpay();
+    _razorpay.on(Razorpay.EVENT_PAYMENT_SUCCESS, _onPaymentSuccess);
+    _razorpay.on(Razorpay.EVENT_PAYMENT_ERROR, _onPaymentError);
+    _razorpay.on(Razorpay.EVENT_EXTERNAL_WALLET, _onExternalWallet);
+  }
 
   @override
   void dispose() {
-    _cardholderCtrl.dispose();
-    _cardNumberCtrl.dispose();
-    _expiryCtrl.dispose();
-    _cvcCtrl.dispose();
+    _razorpay.clear();
     super.dispose();
   }
 
@@ -63,10 +66,34 @@ class _PaymentPageState extends State<PaymentPage> {
   double get _totalPrice => widget.basePrice * _nights;
 
   void _onPay() {
-    if (!_formKey.currentState!.validate()) return;
-    // Dismiss keyboard before processing payment
     FocusScope.of(context).unfocus();
-    final rawCard = _cardNumberCtrl.text.replaceAll(' ', '');
+    widget.cubit.createPaymentOrder(
+      totalPriceInRupees: _totalPrice,
+      holdId: widget.holdId,
+    );
+  }
+
+  void _openRazorpay(PaymentOrderReady state) {
+    _pendingOrderId = state.orderId;
+    _razorpay.open(<String, Object>{
+      'key': state.keyId,
+      'amount': state.amount, // paise from server — DO NOT multiply again
+      'currency': state.currency,
+      'order_id': state.orderId,
+      'name': widget.propertyName,
+      'description': widget.roomTypeName,
+      'prefill': {
+        'name':
+            '${widget.guestDetails['firstName'] ?? ''} ${widget.guestDetails['lastName'] ?? ''}'
+                .trim(),
+        'email': widget.guestDetails['email'] as String? ?? '',
+        'contact': widget.guestDetails['phone'] as String? ?? '',
+      },
+      'theme': {'color': '#003580'},
+    });
+  }
+
+  void _onPaymentSuccess(PaymentSuccessResponse response) {
     widget.cubit.submitBooking(
       holdId: widget.holdId,
       ratePlanId: widget.ratePlanId,
@@ -74,12 +101,25 @@ class _PaymentPageState extends State<PaymentPage> {
       children: widget.children,
       guestDetails: widget.guestDetails,
       payment: {
-        'cardholderName': _cardholderCtrl.text.trim(),
-        'cardNumber': rawCard,
-        'expiry': _expiryCtrl.text.trim(),
-        'cvc': _cvcCtrl.text.trim(),
+        'razorpayOrderId': response.orderId ?? _pendingOrderId ?? '',
+        'razorpayPaymentId': response.paymentId ?? '',
+        'razorpaySignature': response.signature ?? '',
       },
     );
+  }
+
+  void _onPaymentError(PaymentFailureResponse response) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(response.message ?? 'Payment failed. Please try again.'),
+        backgroundColor: AppColors.danger,
+      ),
+    );
+  }
+
+  void _onExternalWallet(ExternalWalletResponse response) {
+    // Razorpay handles external wallet flow natively — no action needed here.
   }
 
   @override
@@ -88,7 +128,9 @@ class _PaymentPageState extends State<PaymentPage> {
       value: widget.cubit,
       child: BlocConsumer<CheckoutCubit, CheckoutState>(
         listener: (context, state) {
-          if (state is BookingSuccess) {
+          if (state is PaymentOrderReady) {
+            _openRazorpay(state);
+          } else if (state is BookingSuccess) {
             context.pushNamed('confirmation', extra: {
               'booking': state.booking,
               'propertyName': widget.propertyName,
@@ -104,7 +146,8 @@ class _PaymentPageState extends State<PaymentPage> {
           }
         },
         builder: (context, state) {
-          final isLoading = state is BookingLoading;
+          final isLoading =
+              state is PaymentOrderLoading || state is BookingLoading;
           return Scaffold(
             backgroundColor: AppColors.background,
             appBar: AppBar(
@@ -119,85 +162,83 @@ class _PaymentPageState extends State<PaymentPage> {
               onTap: () => FocusScope.of(context).unfocus(),
               behavior: HitTestBehavior.opaque,
               child: SingleChildScrollView(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildPriceSummary(),
-                  const SizedBox(height: 20),
-                  const Text(
-                    'Card details',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.text,
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildPriceSummary(),
+                    const SizedBox(height: 20),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 14, vertical: 12),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: AppColors.border),
+                      ),
+                      child: const Row(
+                        children: [
+                          Icon(Icons.lock_outline,
+                              size: 18, color: AppColors.muted),
+                          SizedBox(width: 10),
+                          Expanded(
+                            child: Text(
+                              'Tap Pay to open the secure Razorpay checkout. '
+                              'Pay via card, UPI, netbanking, or wallet.',
+                              style: TextStyle(
+                                  fontSize: 13, color: AppColors.muted),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 12),
-                  Form(
-                    key: _formKey,
-                    child: Column(
+                    const SizedBox(height: 28),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 50,
+                      child: ElevatedButton(
+                        onPressed: isLoading ? null : _onPay,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primary,
+                          foregroundColor: Colors.white,
+                          disabledBackgroundColor: AppColors.border,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          textStyle: const TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        child: isLoading
+                            ? const SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                      Colors.white),
+                                ),
+                              )
+                            : Text('Pay ${formatInr(_totalPrice)}'),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    const Row(
                       children: [
-                        _field(_cardholderCtrl, 'Cardholder name',
-                            required: true),
-                        const SizedBox(height: 12),
-                        _cardNumberField(),
-                        const SizedBox(height: 12),
-                        Row(
-                          children: [
-                            Expanded(child: _expiryField()),
-                            const SizedBox(width: 12),
-                            Expanded(child: _cvcField()),
-                          ],
+                        Icon(Icons.lock_outline,
+                            size: 13, color: AppColors.muted),
+                        SizedBox(width: 4),
+                        Text(
+                          'Secured by Razorpay',
+                          style:
+                              TextStyle(fontSize: 11, color: AppColors.muted),
                         ),
                       ],
                     ),
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: const [
-                      Icon(Icons.lock_outline, size: 13, color: AppColors.muted),
-                      SizedBox(width: 4),
-                      Text(
-                        'Secure payment — test mode only',
-                        style: TextStyle(fontSize: 11, color: AppColors.muted),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 28),
-                  SizedBox(
-                    width: double.infinity,
-                    height: 50,
-                    child: ElevatedButton(
-                      onPressed: isLoading ? null : _onPay,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primary,
-                        foregroundColor: Colors.white,
-                        disabledBackgroundColor: AppColors.border,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        textStyle: const TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      child: isLoading
-                          ? const SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                valueColor: AlwaysStoppedAnimation<Color>(
-                                    Colors.white),
-                              ),
-                            )
-                          : Text('Pay ${formatInr(_totalPrice)}'),
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                ],
-              ),
+                    const SizedBox(height: 24),
+                  ],
+                ),
               ),
             ),
           );
@@ -206,6 +247,7 @@ class _PaymentPageState extends State<PaymentPage> {
     );
   }
 
+  // ── Price summary unchanged from original ──────────────────────────────────
   Widget _buildPriceSummary() {
     final nights = _nights;
     return Container(
@@ -218,14 +260,11 @@ class _PaymentPageState extends State<PaymentPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            widget.propertyName,
-            style: const TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w700,
-              color: AppColors.text,
-            ),
-          ),
+          Text(widget.propertyName,
+              style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.text)),
           const SizedBox(height: 2),
           Text(widget.roomTypeName,
               style: const TextStyle(fontSize: 12, color: AppColors.muted)),
@@ -239,20 +278,16 @@ class _PaymentPageState extends State<PaymentPage> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
-                'Total',
-                style: TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.text),
-              ),
-              Text(
-                formatInr(_totalPrice),
-                style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.primary),
-              ),
+              const Text('Total',
+                  style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.text)),
+              Text(formatInr(_totalPrice),
+                  style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.primary)),
             ],
           ),
         ],
@@ -272,122 +307,4 @@ class _PaymentPageState extends State<PaymentPage> {
                   color: AppColors.text)),
         ],
       );
-
-  Widget _field(TextEditingController ctrl, String label,
-      {bool required = false}) {
-    return TextFormField(
-      controller: ctrl,
-      decoration: _inputDecoration(label),
-      validator: required
-          ? (v) => (v == null || v.trim().isEmpty) ? 'Required' : null
-          : null,
-    );
-  }
-
-  Widget _cardNumberField() {
-    return TextFormField(
-      controller: _cardNumberCtrl,
-      keyboardType: TextInputType.number,
-      inputFormatters: [
-        FilteringTextInputFormatter.digitsOnly,
-        _CardNumberFormatter(),
-      ],
-      maxLength: 19,
-      decoration: _inputDecoration('Card number').copyWith(
-        counterText: '',
-        suffixIcon: const Icon(Icons.credit_card, color: AppColors.muted),
-      ),
-      validator: (v) {
-        final digits = v?.replaceAll(' ', '') ?? '';
-        if (digits.length != 16) return 'Enter a valid 16-digit card number';
-        return null;
-      },
-    );
-  }
-
-  Widget _expiryField() {
-    return TextFormField(
-      controller: _expiryCtrl,
-      keyboardType: TextInputType.number,
-      inputFormatters: [
-        FilteringTextInputFormatter.digitsOnly,
-        _ExpiryFormatter(),
-      ],
-      maxLength: 5,
-      decoration: _inputDecoration('MM/YY').copyWith(counterText: ''),
-      validator: (v) {
-        if (v == null || v.length != 5) return 'Invalid expiry';
-        return null;
-      },
-    );
-  }
-
-  Widget _cvcField() {
-    return TextFormField(
-      controller: _cvcCtrl,
-      keyboardType: TextInputType.number,
-      obscureText: true,
-      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-      maxLength: 3,
-      decoration: _inputDecoration('CVC').copyWith(
-        counterText: '',
-        suffixIcon: const Icon(Icons.help_outline, size: 18, color: AppColors.muted),
-      ),
-      validator: (v) {
-        if (v == null || v.length != 3) return 'Invalid CVC';
-        return null;
-      },
-    );
-  }
-
-  InputDecoration _inputDecoration(String label) => InputDecoration(
-        labelText: label,
-        labelStyle: const TextStyle(fontSize: 13, color: AppColors.muted),
-        filled: true,
-        fillColor: Colors.white,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-          borderSide: const BorderSide(color: AppColors.border),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-          borderSide: const BorderSide(color: AppColors.border),
-        ),
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-      );
-}
-
-class _CardNumberFormatter extends TextInputFormatter {
-  @override
-  TextEditingValue formatEditUpdate(
-      TextEditingValue oldValue, TextEditingValue newValue) {
-    final digits = newValue.text.replaceAll(' ', '');
-    final buffer = StringBuffer();
-    for (int i = 0; i < digits.length; i++) {
-      if (i > 0 && i % 4 == 0) buffer.write(' ');
-      buffer.write(digits[i]);
-    }
-    final formatted = buffer.toString();
-    return TextEditingValue(
-      text: formatted,
-      selection: TextSelection.collapsed(offset: formatted.length),
-    );
-  }
-}
-
-class _ExpiryFormatter extends TextInputFormatter {
-  @override
-  TextEditingValue formatEditUpdate(
-      TextEditingValue oldValue, TextEditingValue newValue) {
-    final digits = newValue.text.replaceAll('/', '');
-    if (digits.length <= 2) {
-      return newValue.copyWith(text: digits);
-    }
-    final formatted = '${digits.substring(0, 2)}/${digits.substring(2)}';
-    return TextEditingValue(
-      text: formatted,
-      selection: TextSelection.collapsed(offset: formatted.length),
-    );
-  }
 }
