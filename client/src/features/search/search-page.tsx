@@ -349,6 +349,7 @@ export default function SearchPage() {
 
   const destInputRef = useRef<HTMLInputElement>(null);
   const dropdownRef  = useRef<HTMLDivElement>(null);
+  const destContainerRef = useRef<HTMLDivElement>(null);
 
   const activeDestination = searchParams.get('destination');
   const activeCheckin     = searchParams.get('checkin')  ?? checkin;
@@ -361,16 +362,20 @@ export default function SearchPage() {
   }, [destination]);
 
   useEffect(() => {
-    const handler = (e: MouseEvent) => {
+    const handler = (e: MouseEvent | TouchEvent) => {
       if (
-        dropdownRef.current && !dropdownRef.current.contains(e.target as Node) &&
-        destInputRef.current && !destInputRef.current.contains(e.target as Node)
+        destContainerRef.current &&
+        !destContainerRef.current.contains(e.target as Node)
       ) {
         setDropdownOpen(false);
       }
     };
     document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
+    document.addEventListener('touchstart', handler);
+    return () => {
+      document.removeEventListener('mousedown', handler);
+      document.removeEventListener('touchstart', handler);
+    };
   }, []);
 
   const { data, isLoading, isError, error } = useQuery({
@@ -459,7 +464,7 @@ export default function SearchPage() {
       <Header />
 
       {/* ── Hero ─────────────────────────────────────────────────────────── */}
-      <div className="relative min-h-[600px] flex items-center justify-center overflow-hidden">
+      <div className="relative min-h-[600px] flex items-center justify-center">
         <div
           aria-hidden="true"
           className="absolute inset-0 bg-cover bg-center"
@@ -511,10 +516,10 @@ export default function SearchPage() {
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
-            className="w-full rounded-2xl shadow-2xl backdrop-blur-md bg-white/95 border border-white/20 p-4 md:p-5"
+            className="w-full rounded-2xl shadow-2xl backdrop-blur-md bg-white/95 border border-white/20 p-4 md:p-5 relative z-20"
           >
             <div className="flex flex-wrap gap-2 items-end">
-              <div className="flex-1 min-w-[180px] relative">
+              <div className="flex-1 min-w-[180px] relative" ref={destContainerRef}>
                 <label className="block text-[10px] font-bold text-muted uppercase tracking-wider mb-1 ml-1">
                   <BedDouble size={11} className="inline mr-1" /> Destination
                 </label>
@@ -672,7 +677,7 @@ export default function SearchPage() {
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
-            className="mt-6 flex flex-wrap items-center justify-center gap-2"
+            className="mt-6 flex flex-wrap items-center justify-center gap-2 relative z-10"
           >
             <span className="text-xs text-white/80 font-semibold mr-1 hidden sm:block">
               Quick search:
