@@ -459,61 +459,59 @@ export default function SearchPage() {
       <Header />
 
       {/* ── Hero ─────────────────────────────────────────────────────────── */}
-      <div className="relative pt-12 pb-20 z-20">
-        <div aria-hidden="true" className="absolute inset-0 bg-gradient-hero opacity-90 pointer-events-none" />
+      <div className="relative min-h-[600px] flex items-center justify-center overflow-hidden">
         <div
           aria-hidden="true"
-          className="absolute inset-0 opacity-30 pointer-events-none"
+          className="absolute inset-0 bg-cover bg-center"
           style={{
-            backgroundImage:
-              'radial-gradient(circle, hsl(var(--color-primary-700) / 0.20) 1px, transparent 1px)',
-            backgroundSize: '28px 28px',
+            backgroundImage: `url('https://images.unsplash.com/photo-1566073771259-6a8506099945?w=1200&q=80&auto=format&fit=crop')`,
           }}
         />
+        <div aria-hidden="true" className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/50 to-black/60 pointer-events-none" />
 
-        <div className="relative z-10 max-w-7xl mx-auto px-4">
+        <div className="relative z-10 w-full max-w-4xl mx-auto px-4 py-12">
           <motion.div
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
             className="text-center mb-8"
           >
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-surface/80 backdrop-blur-sm border border-line/70 text-xs font-semibold text-primary-600 shadow-soft mb-5">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/20 backdrop-blur-md border border-white/30 text-xs font-semibold text-white shadow-soft mb-5">
               <Sparkles size={12} /> India&apos;s favourite hotel booking platform
             </span>
-            <h1 className="font-display text-4xl md:text-5xl lg:text-6xl font-extrabold text-ink mb-3 tracking-tight">
-              Find your <span className="gradient-text">next stay</span>
+            <h1 className="font-display text-4xl md:text-5xl lg:text-6xl font-extrabold text-white mb-3 tracking-tight drop-shadow-lg">
+              Find your <span className="text-accent-400">next stay</span>
             </h1>
-            <p className="text-muted text-base md:text-lg max-w-xl mx-auto">
+            <p className="text-white/90 text-base md:text-lg max-w-2xl mx-auto drop-shadow-md">
               Hand-picked hotels, resorts and homes — at transparent prices, with zero hidden fees.
             </p>
 
             {/* Trust badges */}
-            <div className="mt-6 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs text-muted">
+            <div className="mt-6 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs text-white/85">
               <span className="inline-flex items-center gap-1.5">
-                <Star size={14} className="text-star fill-star" />
-                <span><strong className="text-ink font-bold">4.8</strong> from 12,400+ reviews</span>
+                <Star size={14} className="text-yellow-300 fill-yellow-300" />
+                <span><strong className="text-white font-bold">4.8</strong> from 12,400+ reviews</span>
               </span>
-              <span className="hidden sm:inline-block w-1 h-1 rounded-full bg-line" />
+              <span className="hidden sm:inline-block w-1 h-1 rounded-full bg-white/40" />
               <span className="inline-flex items-center gap-1.5">
-                <ShieldCheck size={14} className="text-success" />
-                <span><strong className="text-ink font-bold">100% secure</strong> bookings</span>
+                <ShieldCheck size={14} className="text-emerald-300" />
+                <span><strong className="text-white font-bold">100% secure</strong> bookings</span>
               </span>
-              <span className="hidden sm:inline-block w-1 h-1 rounded-full bg-line" />
+              <span className="hidden sm:inline-block w-1 h-1 rounded-full bg-white/40" />
               <span className="inline-flex items-center gap-1.5">
-                <Headphones size={14} className="text-primary-600" />
-                <span><strong className="text-ink font-bold">24/7</strong> customer support</span>
+                <Headphones size={14} className="text-blue-300" />
+                <span><strong className="text-white font-bold">24/7</strong> customer support</span>
               </span>
             </div>
           </motion.div>
 
-          {/* Search pill */}
+          {/* Search form */}
           <motion.form
             onSubmit={handleSearch}
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
-            className="w-full rounded-3xl shadow-lift glass-card p-3"
+            className="w-full rounded-2xl shadow-2xl backdrop-blur-md bg-white/95 border border-white/20 p-4 md:p-5"
           >
             <div className="flex flex-wrap gap-2 items-end">
               <div className="flex-1 min-w-[180px] relative">
@@ -676,7 +674,7 @@ export default function SearchPage() {
             transition={{ duration: 0.5, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
             className="mt-6 flex flex-wrap items-center justify-center gap-2"
           >
-            <span className="text-xs text-muted font-semibold mr-1 hidden sm:block">
+            <span className="text-xs text-white/80 font-semibold mr-1 hidden sm:block">
               Quick search:
             </span>
             {PROPERTY_TYPES.map(({ label, Icon, value }) => (
@@ -688,9 +686,9 @@ export default function SearchPage() {
                   setDestination('');
                   destInputRef.current?.focus();
                 }}
-                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-surface/80 backdrop-blur-sm border border-line/70 text-xs font-semibold text-ink hover:bg-surface hover:border-primary-500/40 hover:-translate-y-0.5 shadow-soft transition-all btn-press"
+                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-white/20 backdrop-blur-md border border-white/40 text-xs font-semibold text-white hover:bg-white/30 hover:border-white/60 hover:-translate-y-0.5 shadow-soft transition-all btn-press"
               >
-                <Icon size={13} className="text-primary-600" />
+                <Icon size={13} className="text-accent-300" />
                 {label}
               </button>
             ))}
