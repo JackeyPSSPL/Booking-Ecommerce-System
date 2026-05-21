@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/widgets/gradient_button.dart';
 import '../bloc/auth_bloc.dart';
 import '../bloc/auth_event.dart';
 import '../bloc/auth_state.dart';
@@ -79,11 +80,9 @@ class _OtpPageState extends State<OtpPage> {
         }
       },
       child: Scaffold(
-        backgroundColor: AppColors.background,
         appBar: AppBar(
           backgroundColor: Colors.transparent,
           elevation: 0,
-          foregroundColor: AppColors.text,
         ),
         body: SafeArea(
           child: Center(
@@ -141,6 +140,7 @@ class _OtpPageState extends State<OtpPage> {
   }
 
   Widget _buildOtpBoxes() {
+    final scheme = Theme.of(context).colorScheme;
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: List.generate(_length, (i) {
@@ -155,25 +155,24 @@ class _OtpPageState extends State<OtpPage> {
             keyboardType: TextInputType.number,
             maxLength: 1,
             inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 22,
               fontWeight: FontWeight.w700,
-              color: AppColors.text,
+              color: scheme.onSurface,
             ),
             decoration: InputDecoration(
               counterText: '',
               contentPadding: EdgeInsets.zero,
               border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10),
-                borderSide: const BorderSide(color: AppColors.border),
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: scheme.outline),
               ),
               focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(10),
-                borderSide:
-                    const BorderSide(color: AppColors.primary, width: 2),
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: scheme.primary, width: 2),
               ),
               filled: true,
-              fillColor: Colors.white,
+              fillColor: scheme.surface,
             ),
             onChanged: (value) {
               if (value.length == 1 && i < _length - 1) {
@@ -220,36 +219,10 @@ class _OtpPageState extends State<OtpPage> {
     return BlocBuilder<AuthBloc, AuthState>(
       builder: (context, state) {
         final isLoading = state is AuthLoading;
-        return SizedBox(
-          height: 48,
-          child: ElevatedButton(
-            onPressed: isLoading ? null : _submit,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primary,
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
-              disabledBackgroundColor: AppColors.primary.withValues(alpha: 0.6),
-            ),
-            child: isLoading
-                ? const SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      valueColor:
-                          AlwaysStoppedAnimation<Color>(Colors.white),
-                    ),
-                  )
-                : const Text(
-                    'Verify Email',
-                    style: TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-          ),
+        return GradientButton(
+          onPressed: isLoading ? null : _submit,
+          label: 'Verify Email',
+          loading: isLoading,
         );
       },
     );

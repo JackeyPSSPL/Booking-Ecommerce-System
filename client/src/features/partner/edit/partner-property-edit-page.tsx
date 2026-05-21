@@ -35,13 +35,13 @@ interface EditState {
 function FieldRow({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
-      <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
+      <label className="block text-sm font-medium text-ink mb-1">{label}</label>
       {children}
     </div>
   );
 }
 
-const INPUT_CLS = 'w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:border-[#003580] transition-colors';
+const INPUT_CLS = 'w-full rounded-xl border border-line px-4 py-2.5 text-sm text-ink placeholder-gray-400 focus:outline-none focus:border-primary-600 transition-colors';
 
 export default function PartnerPropertyEditPage() {
   const { id } = useParams<{ id: string }>();
@@ -152,8 +152,8 @@ export default function PartnerPropertyEditPage() {
       <form onSubmit={handleSubmit} className="max-w-2xl space-y-6">
 
         {/* Basic info */}
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-4">
-          <h2 className="text-sm font-bold text-gray-700 uppercase tracking-widest">Basic Info</h2>
+        <div className="bg-surface rounded-2xl border border-line shadow-sm p-6 space-y-4">
+          <h2 className="text-sm font-bold text-ink uppercase tracking-widest">Basic Info</h2>
 
           <FieldRow label="Property name *">
             <input
@@ -205,8 +205,8 @@ export default function PartnerPropertyEditPage() {
         </div>
 
         {/* Description + booking mode */}
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-4">
-          <h2 className="text-sm font-bold text-gray-700 uppercase tracking-widest">Property Details</h2>
+        <div className="bg-surface rounded-2xl border border-line shadow-sm p-6 space-y-4">
+          <h2 className="text-sm font-bold text-ink uppercase tracking-widest">Property Details</h2>
 
           <FieldRow label="Description">
             <textarea
@@ -228,7 +228,7 @@ export default function PartnerPropertyEditPage() {
                 <label
                   key={opt.val}
                   className={`relative p-3 rounded-xl border-2 cursor-pointer transition-all ${
-                    form.bookingMode === opt.val ? 'border-[#003580] bg-blue-50/40' : 'border-gray-200 hover:border-gray-300'
+                    form.bookingMode === opt.val ? 'border-primary-600 bg-primary-500/10/40' : 'border-line hover:border-line'
                   }`}
                 >
                   <input
@@ -238,12 +238,12 @@ export default function PartnerPropertyEditPage() {
                     className="sr-only"
                   />
                   {opt.recommended && (
-                    <span className="absolute top-1.5 right-1.5 text-[9px] font-bold bg-[#FFCC00] text-gray-900 px-1.5 py-0.5 rounded-full">
+                    <span className="absolute top-1.5 right-1.5 text-[9px] font-bold bg-accent-500 text-gray-900 px-1.5 py-0.5 rounded-full">
                       Recommended
                     </span>
                   )}
-                  <p className="text-sm font-semibold text-gray-800">{opt.label}</p>
-                  <p className="text-xs text-gray-500 mt-0.5">{opt.desc}</p>
+                  <p className="text-sm font-semibold text-ink">{opt.label}</p>
+                  <p className="text-xs text-muted mt-0.5">{opt.desc}</p>
                 </label>
               ))}
             </div>
@@ -251,8 +251,8 @@ export default function PartnerPropertyEditPage() {
         </div>
 
         {/* Amenities */}
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-          <h2 className="text-sm font-bold text-gray-700 uppercase tracking-widest mb-4">Amenities</h2>
+        <div className="bg-surface rounded-2xl border border-line shadow-sm p-6">
+          <h2 className="text-sm font-bold text-ink uppercase tracking-widest mb-4">Amenities</h2>
           <div className="flex flex-wrap gap-2">
             {AMENITY_LIST.map(a => (
               <button
@@ -261,8 +261,8 @@ export default function PartnerPropertyEditPage() {
                 onClick={() => toggleAmenity(a)}
                 className={`px-4 py-2 rounded-full text-sm font-medium border transition-colors ${
                   form.amenities.includes(a)
-                    ? 'bg-[#003580] text-white border-[#003580]'
-                    : 'bg-white text-gray-700 border-gray-300 hover:border-[#003580]'
+                    ? 'bg-primary-600 text-white border-primary-600'
+                    : 'bg-surface text-ink border-line hover:border-primary-600'
                 }`}
               >
                 {a}
@@ -272,35 +272,35 @@ export default function PartnerPropertyEditPage() {
         </div>
 
         {/* Room Types */}
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+        <div className="bg-surface rounded-2xl border border-line shadow-sm p-6">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-sm font-bold text-gray-700 uppercase tracking-widest">Room Types</h2>
+            <h2 className="text-sm font-bold text-ink uppercase tracking-widest">Room Types</h2>
             <button
               type="button"
               onClick={() => setShowRtForm(v => !v)}
-              className="text-xs text-[#003580] font-semibold hover:underline"
+              className="text-xs text-primary-600 font-semibold hover:underline"
             >
               {showRtForm ? 'Cancel' : '+ Add room type'}
             </button>
           </div>
 
           {(property.roomTypes?.length ?? 0) === 0 && !showRtForm && (
-            <p className="text-sm text-gray-400">No room types yet — add at least one so customers can book.</p>
+            <p className="text-sm text-muted/70">No room types yet — add at least one so customers can book.</p>
           )}
 
           <div className="space-y-2">
             {property.roomTypes?.map((rt: any) => (
-              <div key={rt.id} className="flex items-center justify-between py-2 border-b border-gray-100 last:border-0">
+              <div key={rt.id} className="flex items-center justify-between py-2 border-b border-line last:border-0">
                 <div>
-                  <p className="text-sm font-medium text-gray-800">{rt.name}</p>
-                  <p className="text-xs text-gray-400">Max {rt.maxOccupancy} guests · ₹{Number(rt.basePrice).toLocaleString('en-IN')}/night</p>
+                  <p className="text-sm font-medium text-ink">{rt.name}</p>
+                  <p className="text-xs text-muted/70">Max {rt.maxOccupancy} guests · ₹{Number(rt.basePrice).toLocaleString('en-IN')}/night</p>
                 </div>
               </div>
             ))}
           </div>
 
           {showRtForm && (
-            <div className="mt-4 pt-4 border-t border-gray-100 space-y-3">
+            <div className="mt-4 pt-4 border-t border-line space-y-3">
               <FieldRow label="Room type *">
                 <select
                   className={INPUT_CLS}
@@ -340,7 +340,7 @@ export default function PartnerPropertyEditPage() {
                   if (!rtForm.basePrice || Number(rtForm.basePrice) <= 0) { toast.error('Enter a valid price'); return; }
                   addRtMutation.mutate();
                 }}
-                className="px-5 py-2 bg-[#003580] text-white text-sm font-bold rounded-xl hover:bg-[#00224F] transition-colors disabled:opacity-60"
+                className="px-5 py-2 bg-primary-600 text-white text-sm font-bold rounded-xl hover:bg-primary-700 transition-colors disabled:opacity-60"
               >
                 {addRtMutation.isPending ? 'Adding…' : 'Add room type'}
               </button>
@@ -353,14 +353,14 @@ export default function PartnerPropertyEditPage() {
           <button
             type="button"
             onClick={() => navigate('/partner/dashboard')}
-            className="px-6 py-2.5 border border-gray-300 text-gray-700 text-sm font-medium rounded-xl hover:border-gray-400 transition-colors"
+            className="px-6 py-2.5 border border-line text-ink text-sm font-medium rounded-xl hover:border-gray-400 transition-colors"
           >
             Cancel
           </button>
           <button
             type="submit"
             disabled={saveMutation.isPending}
-            className="px-8 py-2.5 bg-[#003580] text-white text-sm font-bold rounded-xl hover:bg-[#00224F] transition-colors disabled:opacity-60"
+            className="px-8 py-2.5 bg-primary-600 text-white text-sm font-bold rounded-xl hover:bg-primary-700 transition-colors disabled:opacity-60"
           >
             {saveMutation.isPending ? 'Saving…' : 'Save changes'}
           </button>

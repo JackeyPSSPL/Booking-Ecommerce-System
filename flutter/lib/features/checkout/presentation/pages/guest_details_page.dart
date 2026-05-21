@@ -148,9 +148,8 @@ class _GuestDetailsPageState extends State<GuestDetailsPage> {
         },
         builder: (context, state) {
           return Scaffold(
-            backgroundColor: AppColors.background,
             appBar: AppBar(
-              backgroundColor: AppColors.primary,
+              backgroundColor: Theme.of(context).colorScheme.primary,
               foregroundColor: Colors.white,
               title: const Text(
                 'Guest Details',
@@ -158,12 +157,7 @@ class _GuestDetailsPageState extends State<GuestDetailsPage> {
               ),
             ),
             body: state is HoldLoading
-                ? const Center(
-                    child: CircularProgressIndicator(
-                      valueColor:
-                          AlwaysStoppedAnimation<Color>(AppColors.primary),
-                    ),
-                  )
+                ? const Center(child: CircularProgressIndicator())
                 : (state is CheckoutError && !_holdSucceeded)
                     ? _buildHoldError(state.message)
                     : GestureDetector(
@@ -312,12 +306,13 @@ class _GuestDetailsPageState extends State<GuestDetailsPage> {
   }
 
   Widget _buildSummaryCard(int nights) {
+    final scheme = Theme.of(context).colorScheme;
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.border),
+        color: scheme.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: scheme.outline.withValues(alpha: 0.5)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

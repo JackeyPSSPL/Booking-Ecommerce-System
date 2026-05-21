@@ -59,33 +59,35 @@ export class BookingsService {
 
       // Razorpay HMAC-SHA256 signature verification
       const { razorpayOrderId, razorpayPaymentId, razorpaySignature } = dto.payment;
-      const expectedSig = crypto
-        .createHmac('sha256', config.RAZORPAY_KEY_SECRET)
-        .update(`${razorpayOrderId}|${razorpayPaymentId}`)
-        .digest('hex');
+      const devBypass = config.NODE_ENV === 'development' && config.DEV_BYPASS_PAYMENT;
 
-      const sigBuffer = Buffer.from(razorpaySignature, 'hex');
-      const expectedBuffer = Buffer.from(expectedSig, 'hex');
+      if (!devBypass) {
+        const expectedSig = crypto
+          .createHmac('sha256', config.RAZORPAY_KEY_SECRET)
+          .update(`${razorpayOrderId}|${razorpayPaymentId}`)
+          .digest('hex');
 
-      let signatureValid = false;
-      if (sigBuffer.length === expectedBuffer.length) {
-        signatureValid = crypto.timingSafeEqual(sigBuffer, expectedBuffer);
+        const sigBuffer = Buffer.from(razorpaySignature, 'hex');
+        const expectedBuffer = Buffer.from(expectedSig, 'hex');
+
+        let signatureValid = false;
+        if (sigBuffer.length === expectedBuffer.length) {
+          signatureValid = crypto.timingSafeEqual(sigBuffer, expectedBuffer);
+        }
+
+        if (!signatureValid) {
+          logger.warn('Razorpay signature verification failed', {
+            razorpayOrderId,
+            razorpayPaymentId,
+            userId,
+          });
+          throw new PaymentError('Payment verification failed. Please contact support.');
+        }
+
+        logger.info('Razorpay signature verified', { razorpayOrderId, razorpayPaymentId, userId });
+      } else {
+        logger.warn('DEV_BYPASS_PAYMENT: skipping Razorpay signature verification', { userId });
       }
-
-      if (!signatureValid) {
-        logger.warn('Razorpay signature verification failed', {
-          razorpayOrderId,
-          razorpayPaymentId,
-          userId,
-        });
-        throw new PaymentError('Payment verification failed. Please contact support.');
-      }
-
-      logger.info('Razorpay signature verified', {
-        razorpayOrderId,
-        razorpayPaymentId,
-        userId,
-      });
 
       let ratePlan = dto.ratePlanId
         ? hold.roomType.ratePlans.find((rp) => rp.id === dto.ratePlanId)

@@ -1,5 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
+import { motion, AnimatePresence } from 'framer-motion';
+import { X } from 'lucide-react';
 
 interface ModalProps {
   open: boolean;
@@ -25,53 +27,63 @@ export default function Modal({ open, onClose, title, children, maxWidth = 'md' 
     };
   }, [open, onClose]);
 
-  if (!open) return null;
-
   return createPortal(
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby={title ? 'modal-title' : undefined}
-    >
-      {/* Backdrop */}
-      <div
-        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
-        onClick={onClose}
-        aria-hidden="true"
-      />
+    <AnimatePresence>
+      {open && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby={title ? 'modal-title' : undefined}
+        >
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="absolute inset-0 bg-ink/55 backdrop-blur-md"
+            onClick={onClose}
+            aria-hidden="true"
+          />
 
-      {/* Panel */}
-      <div
-        ref={panelRef}
-        className={`relative z-10 w-full ${widths[maxWidth]} bg-white rounded-2xl shadow-2xl`}
-      >
-        {title && (
-          <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-            <h2 id="modal-title" className="text-lg font-bold text-gray-800">{title}</h2>
-            <button
-              onClick={onClose}
-              className="w-8 h-8 flex items-center justify-center rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors text-xl leading-none"
-              aria-label="Close"
-            >
-              ×
-            </button>
-          </div>
-        )}
-        <div className={title ? 'p-6' : 'p-6'}>
-          {!title && (
-            <button
-              onClick={onClose}
-              className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors text-xl leading-none"
-              aria-label="Close"
-            >
-              ×
-            </button>
-          )}
-          {children}
+          <motion.div
+            ref={panelRef}
+            initial={{ opacity: 0, scale: 0.94, y: 12 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.96, y: 8 }}
+            transition={{ duration: 0.26, ease: [0.16, 1, 0.3, 1] }}
+            className={`relative z-10 w-full ${widths[maxWidth]} glass-card shadow-lift overflow-hidden`}
+          >
+            {title && (
+              <div className="flex items-center justify-between px-6 py-4 border-b border-line/60">
+                <h2 id="modal-title" className="text-lg font-display font-bold text-ink">
+                  {title}
+                </h2>
+                <button
+                  onClick={onClose}
+                  className="w-9 h-9 flex items-center justify-center rounded-full text-muted hover:text-ink hover:bg-surface-elev transition-colors btn-press"
+                  aria-label="Close"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+            )}
+            <div className="p-6">
+              {!title && (
+                <button
+                  onClick={onClose}
+                  className="absolute top-4 right-4 w-9 h-9 flex items-center justify-center rounded-full text-muted hover:text-ink hover:bg-surface-elev transition-colors btn-press"
+                  aria-label="Close"
+                >
+                  <X size={18} />
+                </button>
+              )}
+              {children}
+            </div>
+          </motion.div>
         </div>
-      </div>
-    </div>,
+      )}
+    </AnimatePresence>,
     document.body,
   );
 }

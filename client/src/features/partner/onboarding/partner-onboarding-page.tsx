@@ -98,8 +98,8 @@ const BED_TYPES = ['Double', 'Twin', 'Single', 'King', 'Sofa bed', 'Bunk'];
 
 const PHOTO_TAGS = ['Exterior', 'Living Room', 'Bedroom', 'Bathroom', 'Kitchen', 'Other'];
 
-const SELECT_CLS = 'w-full rounded-xl border border-gray-200 px-4 py-2.5 pr-10 text-sm text-gray-800 focus:outline-none focus:border-[#003580] appearance-none bg-white transition-colors';
-const SELECT_COMPACT_CLS = 'rounded-lg border border-gray-200 px-2 py-1.5 pr-8 text-sm text-gray-700 focus:outline-none focus:border-[#003580] appearance-none bg-white transition-colors';
+const SELECT_CLS = 'w-full rounded-xl border border-line px-4 py-2.5 pr-10 text-sm text-ink focus:outline-none focus:border-primary-600 appearance-none bg-surface transition-colors';
+const SELECT_COMPACT_CLS = 'rounded-lg border border-line px-2 py-1.5 pr-8 text-sm text-ink focus:outline-none focus:border-primary-600 appearance-none bg-surface transition-colors';
 
 const SUBCATEGORY_MAP: Record<string, { label: string; icon: string }[]> = {
   APARTMENT: [
@@ -136,8 +136,8 @@ function FieldRow({ label, hint, error, children }: {
 }) {
   return (
     <div>
-      <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
-      {hint && <p className="text-xs text-gray-400 mb-1.5">{hint}</p>}
+      <label className="block text-sm font-medium text-ink mb-1">{label}</label>
+      {hint && <p className="text-xs text-muted/70 mb-1.5">{hint}</p>}
       {children}
       {error && <p className="text-xs text-red-500 mt-1">{error}</p>}
     </div>
@@ -155,7 +155,7 @@ function TextInput({ value, onChange, placeholder, type = 'text', maxLength }: {
       onChange={e => onChange(e.target.value)}
       placeholder={placeholder}
       maxLength={maxLength}
-      className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:border-[#003580] transition-colors"
+      className="w-full rounded-xl border border-line px-4 py-2.5 text-sm text-ink placeholder-muted/70 focus:outline-none focus:border-primary-600 transition-colors"
     />
   );
 }
@@ -168,14 +168,14 @@ function Stepper({ value, onChange, min = 0, max = 20 }: {
       <button
         type="button"
         onClick={() => onChange(Math.max(min, value - 1))}
-        className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center text-gray-600 hover:border-[#003580] hover:text-[#003580] transition-colors text-lg font-bold disabled:opacity-30"
+        className="w-8 h-8 rounded-full border border-line flex items-center justify-center text-muted hover:border-primary-600 hover:text-primary-600 transition-colors text-lg font-bold disabled:opacity-30"
         disabled={value <= min}
       >−</button>
-      <span className="w-6 text-center text-sm font-semibold text-gray-800">{value}</span>
+      <span className="w-6 text-center text-sm font-semibold text-ink">{value}</span>
       <button
         type="button"
         onClick={() => onChange(Math.min(max, value + 1))}
-        className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center text-gray-600 hover:border-[#003580] hover:text-[#003580] transition-colors text-lg font-bold disabled:opacity-30"
+        className="w-8 h-8 rounded-full border border-line flex items-center justify-center text-muted hover:border-primary-600 hover:text-primary-600 transition-colors text-lg font-bold disabled:opacity-30"
         disabled={value >= max}
       >+</button>
     </div>
@@ -186,17 +186,17 @@ function Toggle({ checked, onChange, label, description }: {
   checked: boolean; onChange: (v: boolean) => void; label: string; description?: string;
 }) {
   return (
-    <div className="flex items-center justify-between p-4 rounded-xl border border-gray-200 hover:border-gray-300 transition-colors">
+    <div className="flex items-center justify-between p-4 rounded-xl border border-line hover:border-line transition-colors">
       <div>
-        <p className="text-sm font-medium text-gray-800">{label}</p>
-        {description && <p className="text-xs text-gray-500 mt-0.5">{description}</p>}
+        <p className="text-sm font-medium text-ink">{label}</p>
+        {description && <p className="text-xs text-muted mt-0.5">{description}</p>}
       </div>
       <button
         type="button"
         onClick={() => onChange(!checked)}
-        className={`relative w-11 h-6 rounded-full transition-colors ${checked ? 'bg-[#003580]' : 'bg-gray-200'}`}
+        className={`relative w-11 h-6 rounded-full transition-colors ${checked ? 'bg-primary-600' : 'bg-gray-200'}`}
       >
-        <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${checked ? 'translate-x-5' : 'translate-x-0'}`} />
+        <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-surface rounded-full shadow transition-transform ${checked ? 'translate-x-5' : 'translate-x-0'}`} />
       </button>
     </div>
   );
@@ -207,7 +207,7 @@ function SelectWrapper({ children }: { children: React.ReactNode }) {
     <div className="relative">
       {children}
       <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center">
-        <svg className="w-4 h-4 text-gray-400" viewBox="0 0 20 20" fill="none" stroke="currentColor">
+        <svg className="w-4 h-4 text-muted/70" viewBox="0 0 20 20" fill="none" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="m6 8 4 4 4-4" />
         </svg>
       </span>
@@ -221,18 +221,18 @@ function AlertModal({ type, message, onClose }: {
   const isSuccess = type === 'success';
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
-      <div className="relative w-full max-w-sm rounded-2xl bg-white shadow-2xl p-6 text-center">
+      <div className="relative w-full max-w-sm rounded-2xl bg-surface shadow-2xl p-6 text-center">
         <div className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 ${isSuccess ? 'bg-green-100' : 'bg-red-100'}`}>
           <span className="text-3xl">{isSuccess ? '🎉' : '⚠️'}</span>
         </div>
         <p className={`text-base font-bold mb-1 ${isSuccess ? 'text-green-800' : 'text-red-700'}`}>
           {isSuccess ? 'All done!' : 'Hold on'}
         </p>
-        <p className="text-sm text-gray-600 mb-5">{message}</p>
+        <p className="text-sm text-muted mb-5">{message}</p>
         <button
           onClick={onClose}
           className={`w-full py-2.5 rounded-xl text-sm font-bold transition-colors ${
-            isSuccess ? 'bg-[#003580] text-white hover:bg-[#00224F]' : 'bg-red-600 text-white hover:bg-red-700'
+            isSuccess ? 'bg-primary-600 text-white hover:bg-primary-700' : 'bg-red-600 text-white hover:bg-red-700'
           }`}
         >
           {isSuccess ? 'Go to Dashboard →' : 'OK, let me fix it'}
@@ -256,7 +256,7 @@ function CategoryScreen({ onSelect }: { onSelect: (cat: string) => void }) {
     <div className="max-w-2xl">
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-gray-900">What type of property are you listing?</h1>
-        <p className="text-gray-500 mt-2">Choose the option that best describes your property.</p>
+        <p className="text-muted mt-2">Choose the option that best describes your property.</p>
       </div>
       <div className="grid grid-cols-2 gap-4">
         {CATEGORIES.map(cat => (
@@ -264,11 +264,11 @@ function CategoryScreen({ onSelect }: { onSelect: (cat: string) => void }) {
             key={cat.id}
             type="button"
             onClick={() => onSelect(cat.id)}
-            className="text-left p-6 rounded-2xl border-2 border-gray-200 hover:border-[#003580] hover:bg-blue-50/30 transition-all group"
+            className="text-left p-6 rounded-2xl border-2 border-line hover:border-primary-600 hover:bg-primary-500/10/30 transition-all group"
           >
             <div className="text-4xl mb-3">{cat.icon}</div>
-            <p className="text-base font-bold text-gray-800 group-hover:text-[#003580]">{cat.label}</p>
-            <p className="text-sm text-gray-500 mt-1">{cat.desc}</p>
+            <p className="text-base font-bold text-ink group-hover:text-primary-600">{cat.label}</p>
+            <p className="text-sm text-muted mt-1">{cat.desc}</p>
           </button>
         ))}
       </div>
@@ -286,11 +286,11 @@ function SubCategoryScreen({
   return (
     <div className="max-w-2xl">
       <div className="mb-8">
-        <button onClick={onBack} className="text-sm text-gray-500 hover:text-gray-800 mb-4 flex items-center gap-1">
+        <button onClick={onBack} className="text-sm text-muted hover:text-ink mb-4 flex items-center gap-1">
           ← Back
         </button>
         <h1 className="text-2xl font-bold text-gray-900">Which best describes your {cat?.label}?</h1>
-        <p className="text-gray-500 mt-2">Be as accurate as possible — guests will see this.</p>
+        <p className="text-muted mt-2">Be as accurate as possible — guests will see this.</p>
       </div>
       <div className="space-y-3">
         {options.map(opt => (
@@ -298,10 +298,10 @@ function SubCategoryScreen({
             key={opt.label}
             type="button"
             onClick={() => onSelect(opt.label)}
-            className="w-full text-left p-5 rounded-2xl border-2 border-gray-200 hover:border-[#003580] hover:bg-blue-50/30 transition-all flex items-center gap-4 group"
+            className="w-full text-left p-5 rounded-2xl border-2 border-line hover:border-primary-600 hover:bg-primary-500/10/30 transition-all flex items-center gap-4 group"
           >
             <span className="text-3xl">{opt.icon}</span>
-            <span className="text-base font-semibold text-gray-800 group-hover:text-[#003580]">{opt.label}</span>
+            <span className="text-base font-semibold text-ink group-hover:text-primary-600">{opt.label}</span>
           </button>
         ))}
       </div>
@@ -319,8 +319,8 @@ function Step1({ s, set, errors }: {
   return (
     <div className="space-y-5">
       {/* Cross-listing check */}
-      <div className="p-4 rounded-xl bg-blue-50 border border-blue-100">
-        <p className="text-sm font-medium text-gray-800 mb-3">
+      <div className="p-4 rounded-xl bg-primary-500/10 border border-primary-500/30">
+        <p className="text-sm font-medium text-ink mb-3">
           Is your property already listed on Airbnb, Vrbo, or similar platforms?
         </p>
         <div className="flex gap-4">
@@ -331,14 +331,14 @@ function Step1({ s, set, errors }: {
                 name="isListedElsewhere"
                 checked={s.isListedElsewhere === opt.val}
                 onChange={() => set({ isListedElsewhere: opt.val })}
-                className="accent-[#003580]"
+                className="accent-primary-600"
               />
-              <span className="text-sm text-gray-700">{opt.label}</span>
+              <span className="text-sm text-ink">{opt.label}</span>
             </label>
           ))}
         </div>
         {s.isListedElsewhere && (
-          <p className="text-xs text-blue-700 mt-2">
+          <p className="text-xs text-primary-600 mt-2">
             You can sync your calendar via iCal in the Pricing step to prevent double-bookings.
           </p>
         )}
@@ -430,8 +430,8 @@ function Step2({ s, set, errors }: {
   return (
     <div className="space-y-6">
       {/* Room type identity — required */}
-      <div className="p-4 rounded-xl bg-blue-50 border border-blue-100 space-y-4">
-        <p className="text-sm font-semibold text-[#003580]">Primary room type <span className="text-red-500">*</span></p>
+      <div className="p-4 rounded-xl bg-primary-500/10 border border-primary-500/30 space-y-4">
+        <p className="text-sm font-semibold text-primary-600">Primary room type <span className="text-red-500">*</span></p>
         <div className="grid grid-cols-2 gap-4">
           <FieldRow label="Room type *" error={errors.roomTypeName}>
             <SelectWrapper>
@@ -455,15 +455,15 @@ function Step2({ s, set, errors }: {
 
       {/* Room counts */}
       <div>
-        <p className="text-sm font-semibold text-gray-700 mb-3">Room configuration</p>
+        <p className="text-sm font-semibold text-ink mb-3">Room configuration</p>
         <div className="grid grid-cols-3 gap-4">
           {[
             { label: 'Bedrooms', key: 'bedrooms' as const },
             { label: 'Living rooms', key: 'livingRooms' as const },
             { label: 'Bathrooms', key: 'bathrooms' as const },
           ].map(({ label, key }) => (
-            <div key={key} className="p-4 rounded-xl border border-gray-200 text-center">
-              <p className="text-xs text-gray-500 mb-3">{label}</p>
+            <div key={key} className="p-4 rounded-xl border border-line text-center">
+              <p className="text-xs text-muted mb-3">{label}</p>
               <Stepper value={s[key]} onChange={v => set({ [key]: v })} min={1} />
             </div>
           ))}
@@ -472,15 +472,15 @@ function Step2({ s, set, errors }: {
 
       {/* Bed configuration */}
       <div>
-        <p className="text-sm font-semibold text-gray-700 mb-3">Bed setup</p>
+        <p className="text-sm font-semibold text-ink mb-3">Bed setup</p>
         <div className="space-y-2">
           {s.beds.map((bed, i) => (
-            <div key={i} className="flex items-center gap-3 p-3 rounded-xl border border-gray-100 bg-gray-50">
+            <div key={i} className="flex items-center gap-3 p-3 rounded-xl border border-line bg-surface-elev">
               <input
                 type="text"
                 value={bed.roomLabel}
                 onChange={e => updateBed(i, { roomLabel: e.target.value })}
-                className="flex-1 min-w-0 bg-transparent text-sm text-gray-700 font-medium focus:outline-none border-b border-dashed border-gray-300 focus:border-[#003580]"
+                className="flex-1 min-w-0 bg-transparent text-sm text-ink font-medium focus:outline-none border-b border-dashed border-line focus:border-primary-600"
               />
               <SelectWrapper>
                 <select
@@ -501,7 +501,7 @@ function Step2({ s, set, errors }: {
         <button
           type="button"
           onClick={addBedRow}
-          className="mt-2 text-sm text-[#003580] hover:underline font-medium"
+          className="mt-2 text-sm text-primary-600 hover:underline font-medium"
         >
           + Add bed type
         </button>
@@ -509,7 +509,7 @@ function Step2({ s, set, errors }: {
 
       {/* Amenities */}
       <div>
-        <p className="text-sm font-semibold text-gray-700 mb-3">Amenities</p>
+        <p className="text-sm font-semibold text-ink mb-3">Amenities</p>
         <div className="flex flex-wrap gap-2">
           {AMENITY_LIST.map(a => (
             <button
@@ -518,8 +518,8 @@ function Step2({ s, set, errors }: {
               onClick={() => toggleAmenity(a)}
               className={`px-4 py-2 rounded-full text-sm font-medium border transition-colors ${
                 s.amenities.includes(a)
-                  ? 'bg-[#003580] text-white border-[#003580]'
-                  : 'bg-white text-gray-700 border-gray-300 hover:border-[#003580]'
+                  ? 'bg-primary-600 text-white border-primary-600'
+                  : 'bg-surface text-ink border-line hover:border-primary-600'
               }`}
             >
               {a}
@@ -536,16 +536,16 @@ function Step2({ s, set, errors }: {
             { val: 'EXTRA_CHARGE', label: 'Breakfast available at extra charge' },
             { val: 'NOT_OFFERED', label: 'Breakfast not offered' },
           ].map(opt => (
-            <label key={opt.val} className="flex items-center gap-3 p-3 rounded-xl border border-gray-200 cursor-pointer hover:border-[#003580] transition-colors">
+            <label key={opt.val} className="flex items-center gap-3 p-3 rounded-xl border border-line cursor-pointer hover:border-primary-600 transition-colors">
               <input
                 type="radio"
                 name="breakfast"
                 value={opt.val}
                 checked={s.breakfast === opt.val}
                 onChange={() => set({ breakfast: opt.val as WizardState['breakfast'] })}
-                className="accent-[#003580]"
+                className="accent-primary-600"
               />
-              <span className="text-sm text-gray-700">{opt.label}</span>
+              <span className="text-sm text-ink">{opt.label}</span>
             </label>
           ))}
         </div>
@@ -559,7 +559,7 @@ function Step2({ s, set, errors }: {
           rows={3}
           maxLength={2000}
           placeholder="Describe your property — what makes it special?"
-          className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:border-[#003580] resize-none"
+          className="w-full rounded-xl border border-line px-4 py-2.5 text-sm text-ink placeholder-muted/70 focus:outline-none focus:border-primary-600 resize-none"
         />
       </FieldRow>
     </div>
@@ -592,15 +592,15 @@ function PhotoRow_({ photo, index, total, onUpdate, onRemove }: {
           value={photo.url}
           onChange={e => onUpdate({ url: e.target.value })}
           placeholder={`Photo ${index + 1} — direct image URL (https://images.unsplash.com/...)`}
-          className={`flex-1 rounded-xl border px-4 py-2.5 text-sm text-gray-800 placeholder-gray-400 focus:outline-none transition-colors ${
-            isPageUrl ? 'border-orange-400 focus:border-orange-500' : 'border-gray-200 focus:border-[#003580]'
+          className={`flex-1 rounded-xl border px-4 py-2.5 text-sm text-ink placeholder-muted/70 focus:outline-none transition-colors ${
+            isPageUrl ? 'border-orange-400 focus:border-orange-500' : 'border-line focus:border-primary-600'
           }`}
         />
         <SelectWrapper>
           <select
             value={photo.tag}
             onChange={e => onUpdate({ tag: e.target.value })}
-            className="rounded-xl border border-gray-200 px-3 py-2.5 pr-9 text-sm text-gray-700 focus:outline-none focus:border-[#003580] appearance-none bg-white transition-colors"
+            className="rounded-xl border border-line px-3 py-2.5 pr-9 text-sm text-ink focus:outline-none focus:border-primary-600 appearance-none bg-surface transition-colors"
           >
             {PHOTO_TAGS.map(t => <option key={t} value={t}>{t}</option>)}
           </select>
@@ -626,7 +626,7 @@ function PhotoRow_({ photo, index, total, onUpdate, onRemove }: {
           <img
             src={url}
             alt={`preview ${index + 1}`}
-            className="w-full h-32 object-cover rounded-xl border border-gray-200"
+            className="w-full h-32 object-cover rounded-xl border border-line"
             style={{ display: 'none' }}
             onLoad={e => {
               const el = e.target as HTMLImageElement;
@@ -668,13 +668,13 @@ function Step3({ s, set, errors }: {
 
   return (
     <div className="space-y-4">
-      <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
-        <p className="text-sm font-semibold text-blue-800 mb-2">📷 Use direct image URLs</p>
-        <ul className="text-xs text-blue-700 space-y-1">
-          <li>✅ <strong>Picsum (free, always works):</strong> <code className="bg-blue-100 px-1 rounded">https://picsum.photos/seed/room1/800/600</code></li>
-          <li>✅ <strong>Unsplash direct:</strong> <code className="bg-blue-100 px-1 rounded">https://images.unsplash.com/photo-ID?w=800&h=600&fit=crop</code></li>
+      <div className="bg-primary-500/10 border border-primary-500/30 rounded-xl p-4">
+        <p className="text-sm font-semibold text-primary-700 mb-2">📷 Use direct image URLs</p>
+        <ul className="text-xs text-primary-600 space-y-1">
+          <li>✅ <strong>Picsum (free, always works):</strong> <code className="bg-primary-500/15 px-1 rounded">https://picsum.photos/seed/room1/800/600</code></li>
+          <li>✅ <strong>Unsplash direct:</strong> <code className="bg-primary-500/15 px-1 rounded">https://images.unsplash.com/photo-ID?w=800&h=600&fit=crop</code></li>
           <li>✅ Any direct .jpg / .png / .webp URL</li>
-          <li>❌ <strong>Unsplash page URL</strong> <code className="bg-blue-100 px-1 rounded">unsplash.com/photos/...</code> — right-click the photo and choose "Copy image address" instead</li>
+          <li>❌ <strong>Unsplash page URL</strong> <code className="bg-primary-500/15 px-1 rounded">unsplash.com/photos/...</code> — right-click the photo and choose "Copy image address" instead</li>
         </ul>
       </div>
 
@@ -689,7 +689,7 @@ function Step3({ s, set, errors }: {
         />
       ))}
 
-      <button type="button" onClick={addRow} className="text-sm text-[#003580] hover:underline font-medium">
+      <button type="button" onClick={addRow} className="text-sm text-primary-600 hover:underline font-medium">
         + Add another photo
       </button>
 
@@ -715,7 +715,7 @@ function Step4({ s, set, errors }: {
     <div className="space-y-6">
       {/* Booking mode */}
       <div>
-        <p className="text-sm font-semibold text-gray-700 mb-3">Booking mode</p>
+        <p className="text-sm font-semibold text-ink mb-3">Booking mode</p>
         <div className="grid grid-cols-2 gap-3">
           {[
             { val: 'INSTANT', label: 'Instant booking', desc: 'Guests book instantly without waiting for approval.', recommended: true },
@@ -724,7 +724,7 @@ function Step4({ s, set, errors }: {
             <label
               key={opt.val}
               className={`relative p-4 rounded-xl border-2 cursor-pointer transition-all ${
-                s.bookingMode === opt.val ? 'border-[#003580] bg-blue-50/40' : 'border-gray-200 hover:border-gray-300'
+                s.bookingMode === opt.val ? 'border-primary-600 bg-primary-500/10/40' : 'border-line hover:border-line'
               }`}
             >
               <input
@@ -736,12 +736,12 @@ function Step4({ s, set, errors }: {
                 className="sr-only"
               />
               {opt.recommended && (
-                <span className="absolute top-2 right-2 text-[10px] font-bold bg-[#FFCC00] text-gray-900 px-2 py-0.5 rounded-full">
+                <span className="absolute top-2 right-2 text-[10px] font-bold bg-accent-500 text-gray-900 px-2 py-0.5 rounded-full">
                   Recommended
                 </span>
               )}
-              <p className="text-sm font-semibold text-gray-800">{opt.label}</p>
-              <p className="text-xs text-gray-500 mt-1">{opt.desc}</p>
+              <p className="text-sm font-semibold text-ink">{opt.label}</p>
+              <p className="text-xs text-muted mt-1">{opt.desc}</p>
             </label>
           ))}
         </div>
@@ -750,28 +750,28 @@ function Step4({ s, set, errors }: {
       {/* Base price */}
       <FieldRow label="Base price per night *" error={errors.basePrice}>
         <div className="relative">
-          <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-semibold text-gray-500">₹</span>
+          <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-semibold text-muted">₹</span>
           <input
             type="number"
             min={0}
             value={s.basePrice}
             onChange={e => set({ basePrice: e.target.value })}
             placeholder="e.g. 2500"
-            className="w-full rounded-xl border border-gray-200 pl-8 pr-4 py-2.5 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:border-[#003580] transition-colors"
+            className="w-full rounded-xl border border-line pl-8 pr-4 py-2.5 text-sm text-ink placeholder-muted/70 focus:outline-none focus:border-primary-600 transition-colors"
           />
         </div>
       </FieldRow>
 
       {/* Rate plans */}
       <div>
-        <p className="text-sm font-semibold text-gray-700 mb-3">Rate plans</p>
+        <p className="text-sm font-semibold text-ink mb-3">Rate plans</p>
         <div className="space-y-3">
           {/* Standard — always on */}
-          <div className="p-4 rounded-xl border border-gray-200 bg-gray-50">
+          <div className="p-4 rounded-xl border border-line bg-surface-elev">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-semibold text-gray-800">Standard rate</p>
-                <p className="text-xs text-gray-500 mt-0.5">Flexible — free cancellation up to 1 day before check-in</p>
+                <p className="text-sm font-semibold text-ink">Standard rate</p>
+                <p className="text-xs text-muted mt-0.5">Flexible — free cancellation up to 1 day before check-in</p>
               </div>
               <span className="text-xs font-bold text-green-700 bg-green-100 px-2.5 py-1 rounded-full">Always active</span>
             </div>
@@ -809,18 +809,18 @@ function Step4({ s, set, errors }: {
             { val: 'ICAL', label: 'Connect via iCal link', desc: 'Paste your Airbnb / Vrbo iCal URL to sync calendars automatically.' },
             { val: 'CHANNEL_MANAGER', label: 'Connect a channel manager', desc: 'Use a third-party channel manager to sync all platforms.' },
           ].map(opt => (
-            <label key={opt.val} className="flex items-start gap-3 p-3 rounded-xl border border-gray-200 cursor-pointer hover:border-[#003580] transition-colors">
+            <label key={opt.val} className="flex items-start gap-3 p-3 rounded-xl border border-line cursor-pointer hover:border-primary-600 transition-colors">
               <input
                 type="radio"
                 name="availabilitySync"
                 value={opt.val}
                 checked={s.availabilitySync === opt.val}
                 onChange={() => set({ availabilitySync: opt.val as WizardState['availabilitySync'] })}
-                className="mt-0.5 accent-[#003580]"
+                className="mt-0.5 accent-primary-600"
               />
               <div>
-                <p className="text-sm font-medium text-gray-800">{opt.label}</p>
-                <p className="text-xs text-gray-500">{opt.desc}</p>
+                <p className="text-sm font-medium text-ink">{opt.label}</p>
+                <p className="text-xs text-muted">{opt.desc}</p>
               </div>
             </label>
           ))}
@@ -835,7 +835,7 @@ function Step4({ s, set, errors }: {
 function Step5({ s, set }: { s: WizardState; set: (p: Partial<WizardState>) => void }) {
   return (
     <div className="space-y-5">
-      <div className="p-3 bg-blue-50 border border-blue-100 rounded-xl text-xs text-blue-700">
+      <div className="p-3 bg-primary-500/10 border border-primary-500/30 rounded-xl text-xs text-primary-600">
         KYC information is required for regulatory compliance. All data is encrypted at rest and never shared publicly.
       </div>
 
@@ -849,7 +849,7 @@ function Step5({ s, set }: { s: WizardState; set: (p: Partial<WizardState>) => v
             <label
               key={opt.val}
               className={`p-4 rounded-xl border-2 cursor-pointer transition-all ${
-                s.entityType === opt.val ? 'border-[#003580] bg-blue-50/40' : 'border-gray-200 hover:border-gray-300'
+                s.entityType === opt.val ? 'border-primary-600 bg-primary-500/10/40' : 'border-line hover:border-line'
               }`}
             >
               <input
@@ -861,8 +861,8 @@ function Step5({ s, set }: { s: WizardState; set: (p: Partial<WizardState>) => v
                 className="sr-only"
               />
               <div className="text-2xl mb-1">{opt.icon}</div>
-              <p className="text-sm font-semibold text-gray-800">{opt.label}</p>
-              <p className="text-xs text-gray-500 mt-0.5">{opt.desc}</p>
+              <p className="text-sm font-semibold text-ink">{opt.label}</p>
+              <p className="text-xs text-muted mt-0.5">{opt.desc}</p>
             </label>
           ))}
         </div>
@@ -870,8 +870,8 @@ function Step5({ s, set }: { s: WizardState; set: (p: Partial<WizardState>) => v
 
       {/* KYC */}
       <div>
-        <p className="text-sm font-semibold text-gray-700 mb-1">Owner verification</p>
-        <p className="text-xs text-gray-400 mb-3">Required for all owners holding a ≥25% stake in the property.</p>
+        <p className="text-sm font-semibold text-ink mb-1">Owner verification</p>
+        <p className="text-xs text-muted/70 mb-3">Required for all owners holding a ≥25% stake in the property.</p>
         <div className="space-y-3">
           <div className="grid grid-cols-2 gap-3">
             <FieldRow label="First name">
@@ -887,7 +887,7 @@ function Step5({ s, set }: { s: WizardState; set: (p: Partial<WizardState>) => v
               value={s.dob}
               onChange={e => set({ dob: e.target.value })}
               max={new Date(Date.now() - 18 * 365.25 * 86400000).toISOString().split('T')[0]}
-              className="w-full rounded-xl border border-gray-200 px-4 py-2.5 text-sm text-gray-800 focus:outline-none focus:border-[#003580] transition-colors"
+              className="w-full rounded-xl border border-line px-4 py-2.5 text-sm text-ink focus:outline-none focus:border-primary-600 transition-colors"
             />
           </FieldRow>
         </div>
@@ -895,7 +895,7 @@ function Step5({ s, set }: { s: WizardState; set: (p: Partial<WizardState>) => v
 
       {/* India tax */}
       <div>
-        <p className="text-sm font-semibold text-gray-700 mb-3">India tax & compliance</p>
+        <p className="text-sm font-semibold text-ink mb-3">India tax & compliance</p>
         <div className="space-y-3">
           {/* GST */}
           <FieldRow label="GST registration">
@@ -907,9 +907,9 @@ function Step5({ s, set }: { s: WizardState; set: (p: Partial<WizardState>) => v
                     name="gstRegistered"
                     checked={s.gstRegistered === opt.val}
                     onChange={() => set({ gstRegistered: opt.val })}
-                    className="accent-[#003580]"
+                    className="accent-primary-600"
                   />
-                  <span className="text-sm text-gray-700">{opt.label}</span>
+                  <span className="text-sm text-ink">{opt.label}</span>
                 </label>
               ))}
             </div>
@@ -966,12 +966,12 @@ function Step6({
 }) {
   const Section = ({ title, items }: { title: string; items: [string, string][] }) => (
     <div>
-      <h3 className="text-xs font-bold text-gray-500 mb-2 uppercase tracking-widest">{title}</h3>
-      <div className="bg-gray-50 rounded-xl p-4 space-y-2">
+      <h3 className="text-xs font-bold text-muted mb-2 uppercase tracking-widest">{title}</h3>
+      <div className="bg-surface-elev rounded-xl p-4 space-y-2">
         {items.map(([k, v]) => (
           <div key={k} className="flex justify-between text-sm">
-            <span className="text-gray-500 shrink-0">{k}</span>
-            <span className="text-gray-800 font-medium text-right max-w-[60%] truncate">{v || '—'}</span>
+            <span className="text-muted shrink-0">{k}</span>
+            <span className="text-ink font-medium text-right max-w-[60%] truncate">{v || '—'}</span>
           </div>
         ))}
       </div>
@@ -1014,8 +1014,8 @@ function Step6({
 
       {/* Contracting party */}
       <div>
-        <h3 className="text-xs font-bold text-gray-500 mb-2 uppercase tracking-widest">Contracting Party</h3>
-        <div className="space-y-3 p-4 rounded-xl border border-gray-200">
+        <h3 className="text-xs font-bold text-muted mb-2 uppercase tracking-widest">Contracting Party</h3>
+        <div className="space-y-3 p-4 rounded-xl border border-line">
           <div className="grid grid-cols-2 gap-3">
             <FieldRow label="First name *">
               <TextInput value={s.contractFirstName} onChange={v => set({ contractFirstName: v })} placeholder="First name" />
@@ -1038,7 +1038,7 @@ function Step6({
 
       {/* Agreement */}
       <div>
-        <h3 className="text-xs font-bold text-gray-500 mb-2 uppercase tracking-widest">Agreement</h3>
+        <h3 className="text-xs font-bold text-muted mb-2 uppercase tracking-widest">Agreement</h3>
         <div className="grid grid-cols-2 gap-3">
           {[
             { val: 'INDIVIDUAL', label: 'I am listing as an Individual', icon: '👤' },
@@ -1047,7 +1047,7 @@ function Step6({
             <label
               key={opt.val}
               className={`p-4 rounded-xl border-2 cursor-pointer transition-all ${
-                s.listingAs === opt.val ? 'border-[#003580] bg-blue-50/40' : 'border-gray-200 hover:border-gray-300'
+                s.listingAs === opt.val ? 'border-primary-600 bg-primary-500/10/40' : 'border-line hover:border-line'
               }`}
             >
               <input
@@ -1059,7 +1059,7 @@ function Step6({
                 className="sr-only"
               />
               <div className="text-xl mb-1">{opt.icon}</div>
-              <p className="text-sm font-medium text-gray-800">{opt.label}</p>
+              <p className="text-sm font-medium text-ink">{opt.label}</p>
             </label>
           ))}
         </div>
@@ -1071,11 +1071,11 @@ function Step6({
           type="checkbox"
           checked={s.certify}
           onChange={e => set({ certify: e.target.checked })}
-          className="mt-0.5 accent-[#003580] w-4 h-4 shrink-0"
+          className="mt-0.5 accent-primary-600 w-4 h-4 shrink-0"
         />
-        <span className="text-sm text-gray-700">
+        <span className="text-sm text-ink">
           I confirm that this is a legitimate property listing and that I have the authority to list it on StayBook. I agree to the{' '}
-          <span className="text-[#003580] font-medium">Partner Terms & Conditions</span> and acknowledge the{' '}
+          <span className="text-primary-600 font-medium">Partner Terms & Conditions</span> and acknowledge the{' '}
           <strong>12% platform commission</strong>.
         </span>
       </label>
@@ -1086,7 +1086,7 @@ function Step6({
           type="button"
           onClick={onDraft}
           disabled={isPending}
-          className="flex-1 px-5 py-3 border border-gray-300 text-gray-700 text-sm font-medium rounded-xl hover:border-gray-400 transition-colors disabled:opacity-60"
+          className="flex-1 px-5 py-3 border border-line text-ink text-sm font-medium rounded-xl hover:border-gray-400 transition-colors disabled:opacity-60"
         >
           {isPending ? 'Saving…' : "I'm not ready — Save as draft"}
         </button>
@@ -1095,7 +1095,7 @@ function Step6({
           onClick={onPublish}
           disabled={!canPublish || isPending}
           title={!canPublish ? 'Fill contracting details and accept terms to publish' : undefined}
-          className="flex-1 px-6 py-3 bg-[#FFCC00] text-gray-900 text-sm font-bold rounded-xl hover:bg-[#E6B800] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          className="flex-1 px-6 py-3 bg-accent-500 text-gray-900 text-sm font-bold rounded-xl hover:bg-accent-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isPending ? 'Publishing…' : 'Open for bookings →'}
         </button>
@@ -1275,28 +1275,28 @@ export default function PartnerOnboardingPage() {
               onClick={() => { if (i < step) setStep(i); }}
             >
               <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold border-2 transition-colors ${
-                i < step  ? 'bg-[#003580] border-[#003580] text-white' :
-                i === step ? 'border-[#003580] text-[#003580] bg-white' :
-                             'border-gray-200 text-gray-400 bg-white'
+                i < step  ? 'bg-primary-600 border-primary-600 text-white' :
+                i === step ? 'border-primary-600 text-primary-600 bg-surface' :
+                             'border-line text-muted/70 bg-surface'
               }`}>
                 {i < step ? '✓' : i + 1}
               </div>
               <span className={`text-sm font-medium hidden sm:block ${
-                i === step ? 'text-[#003580]' : i < step ? 'text-gray-700' : 'text-gray-400'
+                i === step ? 'text-primary-600' : i < step ? 'text-ink' : 'text-muted/70'
               }`}>
                 {label}
               </span>
             </div>
             {i < STEPS.length - 1 && (
-              <div className={`w-8 h-0.5 mx-2 ${i < step ? 'bg-[#003580]' : 'bg-gray-200'}`} />
+              <div className={`w-8 h-0.5 mx-2 ${i < step ? 'bg-primary-600' : 'bg-gray-200'}`} />
             )}
           </div>
         ))}
       </div>
 
       {/* Step card */}
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-8 max-w-2xl">
-        <h2 className="text-lg font-bold text-gray-800 mb-6">
+      <div className="bg-surface rounded-2xl border border-line shadow-sm p-8 max-w-2xl">
+        <h2 className="text-lg font-bold text-ink mb-6">
           Step {step + 1} of {STEPS.length}: {STEPS[step]}
         </h2>
 
@@ -1317,19 +1317,19 @@ export default function PartnerOnboardingPage() {
 
         {/* Nav buttons (hidden on Step 6 — CTAs are inline there) */}
         {step < STEPS.length - 1 && (
-          <div className="flex justify-between mt-8 pt-6 border-t border-gray-100">
+          <div className="flex justify-between mt-8 pt-6 border-t border-line">
             <button
               onClick={() => {
                 if (step === 0) { setPhase('SUBCATEGORY'); }
                 else setStep(s => Math.max(s - 1, 0));
               }}
-              className="px-5 py-2.5 text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors"
+              className="px-5 py-2.5 text-sm font-medium text-muted hover:text-gray-900 transition-colors"
             >
               ← Back
             </button>
             <button
               onClick={next}
-              className="px-6 py-2.5 bg-[#003580] text-white text-sm font-bold rounded-xl hover:bg-[#00224F] transition-colors"
+              className="px-6 py-2.5 bg-primary-600 text-white text-sm font-bold rounded-xl hover:bg-primary-700 transition-colors"
             >
               Next →
             </button>

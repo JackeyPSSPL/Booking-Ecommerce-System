@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:dio/dio.dart';
 import '../../../../core/network/dio_client.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/widgets/theme_toggle_tile.dart';
 import '../../../../injection_container.dart';
 import '../bloc/auth_bloc.dart';
 import '../bloc/auth_event.dart';
@@ -94,9 +95,8 @@ class _ProfilePageState extends State<ProfilePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
       appBar: AppBar(
-        backgroundColor: AppColors.primary,
+        backgroundColor: Theme.of(context).colorScheme.primary,
         foregroundColor: Colors.white,
         title: const Text(
           'My Profile',
@@ -345,7 +345,10 @@ class _ProfilePageState extends State<ProfilePage> {
                   subtitle: 'View your past and cancelled trips',
                   onTap: () => context.pushNamed('trips'),
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: 16),
+
+                const ThemeToggleTile(),
+                const SizedBox(height: 16),
 
                 // Logout button
                 _actionTile(

@@ -1,6 +1,7 @@
 import 'package:get_it/get_it.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'core/network/dio_client.dart';
+import 'core/theme/theme_cubit.dart';
 import 'features/auth/data/datasources/auth_remote_datasource.dart';
 import 'features/auth/data/repositories/auth_repository_impl.dart';
 import 'features/auth/domain/repositories/auth_repository.dart';
@@ -45,6 +46,9 @@ Future<void> init() async {
     () => const FlutterSecureStorage(),
   );
   sl.registerLazySingleton<DioClient>(() => DioClient(sl()));
+
+  // ── Theme ─────────────────────────────────────────────────────────────────
+  sl.registerLazySingleton<ThemeCubit>(() => ThemeCubit(sl()));
 
   // ── Auth ──────────────────────────────────────────────────────────────────
   sl.registerLazySingleton<AuthRemoteDataSource>(

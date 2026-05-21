@@ -45,10 +45,10 @@ class _TripsPageState extends State<TripsPage>
         }
       },
       builder: (context, state) {
+        final scheme = Theme.of(context).colorScheme;
         return Scaffold(
-          backgroundColor: AppColors.background,
           appBar: AppBar(
-            backgroundColor: AppColors.primary,
+            backgroundColor: scheme.primary,
             foregroundColor: Colors.white,
             leading: IconButton(
               icon: const Icon(Icons.arrow_back, color: Colors.white),
@@ -66,7 +66,7 @@ class _TripsPageState extends State<TripsPage>
             ),
             bottom: TabBar(
               controller: _tabController,
-              indicatorColor: AppColors.accent,
+              indicatorColor: scheme.secondary,
               labelColor: Colors.white,
               unselectedLabelColor: Colors.white60,
               labelStyle: const TextStyle(
@@ -76,10 +76,7 @@ class _TripsPageState extends State<TripsPage>
           ),
           body: switch (state) {
             TripsLoading() || TripsInitial() => const Center(
-                child: CircularProgressIndicator(
-                  valueColor:
-                      AlwaysStoppedAnimation<Color>(AppColors.primary),
-                ),
+                child: CircularProgressIndicator(),
               ),
             TripsError(:final message) => _buildError(message),
             TripsLoaded() => _buildTabContent(state),

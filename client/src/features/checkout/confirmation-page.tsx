@@ -1,11 +1,14 @@
 import { useEffect, useRef } from 'react';
 import { useParams, useLocation, Link } from 'react-router-dom';
+import { motion } from 'framer-motion';
+import {
+  CheckCircle2, Copy, Printer, ArrowRight, IdCard, Clock, Phone,
+} from 'lucide-react';
 import { CreatedBooking } from '../../types';
 import { formatDate, formatPrice } from '../../utils/format';
 import Header from '../../components/layout/Header';
 import PageWrapper from '../../components/layout/PageWrapper';
 
-// CSS-only confetti — injected once on mount
 const CONFETTI_CSS = `
 @keyframes confetti-fall {
   0%   { transform: translateY(-20px) rotate(0deg);   opacity: 1; }
@@ -18,14 +21,14 @@ const CONFETTI_CSS = `
 }
 `;
 
-const COLORS = ['#003580','#FFCC00','#00875A','#D32F2F','#9C27B0','#FF9800'];
+const COLORS = ['#4F46E5', '#818CF8', '#F97066', '#10B981', '#F59E0B', '#A78BFA'];
 
 function spawnConfetti() {
   const style = document.createElement('style');
   style.textContent = CONFETTI_CSS;
   document.head.appendChild(style);
 
-  for (let i = 0; i < 80; i++) {
+  for (let i = 0; i < 90; i++) {
     const el = document.createElement('div');
     el.className = 'confetti-piece';
     el.style.left     = `${Math.random() * 100}vw`;
@@ -53,21 +56,19 @@ export default function ConfirmationPage() {
 
   const handleCopy = () => {
     if (!booking) return;
-    navigator.clipboard.writeText(booking.confirmationNumber).then(() => {
-      // brief visual feedback via button text swap handled inline
-    });
+    navigator.clipboard.writeText(booking.confirmationNumber);
   };
 
   if (!booking) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-bg">
         <Header />
         <PageWrapper>
-          <div className="max-w-lg mx-auto text-center py-16">
-            <p className="text-gray-500 mb-4">
-              Booking <strong>{bookingId}</strong> confirmed.
+          <div className="max-w-lg mx-auto text-center py-16 bento-card p-10">
+            <p className="text-muted mb-4">
+              Booking <strong className="text-ink">{bookingId}</strong> confirmed.
             </p>
-            <Link to="/trips" className="text-primary-500 hover:underline text-sm">
+            <Link to="/trips" className="text-primary-600 hover:underline text-sm font-semibold">
               View my trips
             </Link>
           </div>
@@ -77,10 +78,9 @@ export default function ConfirmationPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-bg">
       <Header />
 
-      {/* Print-only styles */}
       <style>{`
         @media print {
           header, .no-print { display: none !important; }
@@ -90,93 +90,102 @@ export default function ConfirmationPage() {
 
       <PageWrapper>
         <div className="max-w-lg mx-auto">
-          {/* Main card */}
-          <div className="bg-white rounded-xl border border-gray-200 p-8 text-center shadow-sm">
-            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <svg className="w-9 h-9 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
-              </svg>
+          <motion.div
+            initial={{ opacity: 0, scale: 0.96, y: 12 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+            className="relative glass-card shadow-card-lg overflow-hidden"
+          >
+            {/* Gradient hero strip */}
+            <div className="relative bg-gradient-hero p-8 text-center">
+              <motion.div
+                initial={{ scale: 0.5, rotate: -10 }}
+                animate={{ scale: 1, rotate: 0 }}
+                transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+                className="w-20 h-20 mx-auto rounded-full bg-success text-white flex items-center justify-center shadow-glow"
+              >
+                <CheckCircle2 size={42} strokeWidth={2.5} />
+              </motion.div>
+              <h1 className="font-display text-3xl font-extrabold text-ink mt-4">
+                Booking Confirmed!
+              </h1>
+              <p className="text-muted text-sm mt-1">
+                Confirmation sent to <strong className="text-ink">{booking.guestEmail}</strong>
+              </p>
             </div>
-            <h1 className="text-2xl font-bold text-gray-900 mb-1">Booking Confirmed!</h1>
-            <p className="text-gray-500 text-sm mb-6">
-              Confirmation sent to <strong>{booking.guestEmail}</strong>
-            </p>
 
-            {/* Booking details */}
-            <div className="bg-gray-50 rounded-xl p-6 mb-6 text-left space-y-3">
-              {/* Confirmation number with copy */}
-              <div className="flex justify-between items-center text-sm">
-                <span className="text-gray-500">Confirmation #</span>
-                <div className="flex items-center gap-2">
-                  <span className="font-mono tracking-wider font-medium text-gray-900">
-                    {booking.confirmationNumber}
-                  </span>
-                  <button
-                    onClick={handleCopy}
-                    title="Copy confirmation number"
-                    className="text-gray-400 hover:text-primary-500 transition-colors"
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                        d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                    </svg>
-                  </button>
+            <div className="p-6">
+              <div className="bg-surface-elev rounded-2xl p-5 text-left space-y-3 border border-line/60">
+                <div className="flex justify-between items-center text-sm">
+                  <span className="text-muted">Confirmation #</span>
+                  <div className="flex items-center gap-2">
+                    <span className="font-mono tracking-wider font-bold text-ink">
+                      {booking.confirmationNumber}
+                    </span>
+                    <button
+                      onClick={handleCopy}
+                      title="Copy confirmation number"
+                      className="text-muted hover:text-primary-600 transition-colors btn-press"
+                    >
+                      <Copy size={14} />
+                    </button>
+                  </div>
+                </div>
+
+                <InfoRow label="PIN"        value={booking.pin} mono />
+                <InfoRow label="Guest"      value={booking.guestName} />
+                <InfoRow label="Check-in"   value={formatDate(booking.checkin)} />
+                <InfoRow label="Check-out"  value={formatDate(booking.checkout)} />
+                <InfoRow
+                  label="Guests"
+                  value={`${booking.adults} adult${booking.adults !== 1 ? 's' : ''}${
+                    booking.children ? `, ${booking.children} child${booking.children !== 1 ? 'ren' : ''}` : ''
+                  }`}
+                />
+                <div className="border-t border-line/60 pt-3">
+                  <InfoRow label="Total paid" value={formatPrice(Number(booking.totalPrice))} bold />
                 </div>
               </div>
 
-              <InfoRow label="PIN" value={booking.pin} mono />
-              <InfoRow label="Guest" value={booking.guestName} />
-              <InfoRow label="Check-in" value={formatDate(booking.checkin)} />
-              <InfoRow label="Check-out" value={formatDate(booking.checkout)} />
-              <InfoRow
-                label="Guests"
-                value={`${booking.adults} adult${booking.adults !== 1 ? 's' : ''}${
-                  booking.children ? `, ${booking.children} child${booking.children !== 1 ? 'ren' : ''}` : ''
-                }`}
-              />
-              <div className="border-t border-gray-200 pt-3">
-                <InfoRow label="Total paid" value={formatPrice(Number(booking.totalPrice))} bold />
+              <div className="flex flex-col sm:flex-row gap-3 no-print mt-6">
+                <Link
+                  to="/trips"
+                  className="flex-1 inline-flex items-center justify-center gap-1 px-4 py-2.5 rounded-md text-white text-sm font-semibold shadow-card hover:-translate-y-0.5 transition-all btn-press [background-image:linear-gradient(135deg,hsl(var(--color-primary-500))_0%,hsl(var(--color-accent-500))_100%)]"
+                >
+                  View my trips <ArrowRight size={14} />
+                </Link>
+                <button
+                  onClick={() => window.print()}
+                  className="flex-1 inline-flex items-center justify-center gap-1 bg-surface-elev border border-line text-ink rounded-md py-2.5 text-sm font-semibold hover:border-primary-300 transition-colors btn-press"
+                >
+                  <Printer size={14} /> Save as PDF
+                </button>
+                <Link
+                  to="/"
+                  className="flex-1 inline-flex items-center justify-center gap-1 bg-surface-elev border border-line text-ink rounded-md py-2.5 text-sm font-semibold hover:border-primary-300 transition-colors btn-press"
+                >
+                  Back to search
+                </Link>
               </div>
             </div>
+          </motion.div>
 
-            {/* Action buttons */}
-            <div className="flex flex-col sm:flex-row gap-3 no-print">
-              <Link
-                to="/trips"
-                className="flex-1 text-center bg-primary-500 text-white rounded-lg py-2.5 text-sm font-medium hover:bg-primary-600 transition-colors"
-              >
-                View my trips
-              </Link>
-              <button
-                onClick={() => window.print()}
-                className="flex-1 text-center bg-gray-100 text-gray-700 rounded-lg py-2.5 text-sm font-medium hover:bg-gray-200 transition-colors"
-              >
-                🖨 Save as PDF
-              </button>
-              <Link
-                to="/"
-                className="flex-1 text-center bg-gray-100 text-gray-700 rounded-lg py-2.5 text-sm font-medium hover:bg-gray-200 transition-colors"
-              >
-                Back to search
-              </Link>
-            </div>
-          </div>
-
-          {/* What's next */}
-          <div className="mt-6 bg-blue-50 rounded-xl p-6 no-print">
-            <h2 className="font-semibold text-gray-800 mb-3 text-sm">What's next?</h2>
-            <ul className="space-y-2 text-sm text-gray-600">
-              <li className="flex items-start gap-2">
-                <span>🪪</span>
+          <div className="mt-6 bento-card p-6 no-print">
+            <h2 className="font-display font-bold text-ink mb-3 text-sm uppercase tracking-wider">
+              What&apos;s next?
+            </h2>
+            <ul className="space-y-3 text-sm text-muted">
+              <li className="flex items-start gap-3">
+                <IdCard size={18} className="text-primary-600 shrink-0 mt-0.5" />
                 <span>Carry a valid photo ID at check-in — your PIN may be required.</span>
               </li>
-              <li className="flex items-start gap-2">
-                <span>⏰</span>
+              <li className="flex items-start gap-3">
+                <Clock size={18} className="text-primary-600 shrink-0 mt-0.5" />
                 <span>Standard check-in is 2:00 PM. Early check-in subject to availability.</span>
               </li>
-              <li className="flex items-start gap-2">
-                <span>📞</span>
-                <span>Need to change your booking? Visit <strong>My Trips</strong> or contact the property directly.</span>
+              <li className="flex items-start gap-3">
+                <Phone size={18} className="text-primary-600 shrink-0 mt-0.5" />
+                <span>Need to change your booking? Visit <strong className="text-ink">My Trips</strong> or contact the property directly.</span>
               </li>
             </ul>
           </div>
@@ -186,25 +195,15 @@ export default function ConfirmationPage() {
   );
 }
 
-function InfoRow({
-  label,
-  value,
-  mono,
-  bold,
-}: {
-  label: string;
-  value: string;
-  mono?: boolean;
-  bold?: boolean;
-}) {
+function InfoRow({ label, value, mono, bold }: { label: string; value: string; mono?: boolean; bold?: boolean }) {
   return (
     <div className="flex justify-between items-center text-sm">
-      <span className="text-gray-500">{label}</span>
+      <span className="text-muted">{label}</span>
       <span
         className={[
-          'text-gray-900',
+          'text-ink',
           mono ? 'font-mono tracking-wider' : '',
-          bold ? 'font-bold text-base' : 'font-medium',
+          bold ? 'font-display font-extrabold text-base gradient-text' : 'font-semibold',
         ].join(' ')}
       >
         {value}

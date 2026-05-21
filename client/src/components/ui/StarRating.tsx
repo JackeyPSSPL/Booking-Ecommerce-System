@@ -15,13 +15,16 @@ export default function StarRating({ stars, size = 'md', showNumber = false }: S
       {Array.from({ length: 5 }, (_, i) => {
         const active = i < filled || (i === filled && half);
         return (
-          <span key={i} className={active ? 'text-yellow-400' : 'text-gray-200'}>
+          <span
+            key={i}
+            className={active ? 'text-star drop-shadow-[0_1px_3px_hsl(var(--color-star)/0.45)]' : 'text-line'}
+          >
             ★
           </span>
         );
       })}
       {showNumber && (
-        <span className="ml-1 text-gray-600 font-medium">{stars.toFixed(1)}</span>
+        <span className="ml-1.5 text-muted font-semibold">{stars.toFixed(1)}</span>
       )}
     </span>
   );

@@ -14,6 +14,7 @@ import { bookingsRouter } from './modules/bookings/bookings.router';
 import { paymentsRouter } from './modules/payments/payments.router';
 import { partnerRouter } from './modules/partner/partner.router';
 import { adminRouter } from './modules/admin/admin.router';
+import { mediaRouter } from './modules/media/media.router';
 
 export function createApp(): Application {
   const app = express();
@@ -45,6 +46,7 @@ export function createApp(): Application {
   app.use('/api/v1/payments', paymentsRouter);
   app.use('/api/v1/partner', partnerRouter);
   app.use('/api/v1/admin', adminRouter);
+  app.use('/api/v1/media', mediaRouter);
 
   app.use(globalErrorHandler);
 

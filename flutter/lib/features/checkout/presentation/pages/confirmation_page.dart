@@ -235,9 +235,8 @@ class _ConfirmationPageState extends State<ConfirmationPage>
     );
 
     return Scaffold(
-      backgroundColor: AppColors.background,
       appBar: AppBar(
-        backgroundColor: AppColors.primary,
+        backgroundColor: Theme.of(context).colorScheme.primary,
         foregroundColor: Colors.white,
         title: const Text(
           'Booking Confirmed',

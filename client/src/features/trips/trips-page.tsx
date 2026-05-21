@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
+import { Search as SearchIcon } from 'lucide-react';
 import { bookingsApi } from '../../api/bookings.api';
 import { BookingListItem } from '../../types';
 import { formatDate, formatPrice } from '../../utils/format';
@@ -59,31 +61,30 @@ export default function TripsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-bg">
       <Header />
       <PageWrapper>
-        <h1 className="text-2xl font-bold text-gray-900 mb-6">My Stay Booked</h1>
+        <h1 className="font-display text-3xl font-extrabold text-ink mb-2">My Stay Booked</h1>
+        <p className="text-sm text-muted mb-6">Manage your past and cancelled stays.</p>
 
-        {/* Tab bar */}
-        <div className="flex gap-1 mb-6 border-b border-gray-200">
+        {/* Tab bar — 3D pills */}
+        <div className="inline-flex gap-1 mb-6 p-1 bg-surface-elev border border-line rounded-full">
           {(Object.keys(TAB_LABELS) as Tab[]).map(tab => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
               className={[
-                'px-4 py-2.5 text-sm font-medium transition-colors relative',
+                'relative inline-flex items-center gap-2 px-4 py-1.5 text-sm font-semibold rounded-full transition-all',
                 activeTab === tab
-                  ? 'text-[#003580] border-b-2 border-[#003580] -mb-px'
-                  : 'text-gray-500 hover:text-gray-700',
+                  ? 'bg-surface text-ink shadow-card'
+                  : 'text-muted hover:text-ink',
               ].join(' ')}
             >
               {TAB_LABELS[tab]}
               {counts[tab] > 0 && (
                 <span className={[
-                  'ml-1.5 text-xs px-1.5 py-0.5 rounded-full',
-                  activeTab === tab
-                    ? 'bg-blue-100 text-[#003580]'
-                    : 'bg-gray-100 text-gray-500',
+                  'text-[10px] font-bold px-1.5 py-0.5 rounded-full',
+                  activeTab === tab ? 'bg-primary-500/15 text-primary-600' : 'bg-line text-muted',
                 ].join(' ')}>
                   {counts[tab]}
                 </span>
@@ -100,12 +101,13 @@ export default function TripsPage() {
         {isError && <ErrorBanner message={getApiError(error)} />}
 
         {!isLoading && !isError && tabBookings.length === 0 && (
-          <div className="text-center py-20">
-            <p className="text-gray-400 mb-2">
+          <div className="text-center py-20 bento-card p-10">
+            <SearchIcon size={36} className="mx-auto text-muted mb-3" />
+            <p className="text-ink font-display font-semibold mb-1">
               {activeTab === 'past' ? 'No past bookings yet.' : 'No cancelled bookings.'}
             </p>
             {activeTab === 'past' && (
-              <a href="/" className="text-sm text-[#003580] hover:underline">
+              <a href="/" className="text-sm text-primary-600 hover:underline font-semibold">
                 Start searching →
               </a>
             )}
@@ -114,17 +116,23 @@ export default function TripsPage() {
 
         {tabBookings.length > 0 && (
           <div className="space-y-4">
-            {tabBookings.map((b) => (
-              <BookingCard
+            {tabBookings.map((b, i) => (
+              <motion.div
                 key={b.id}
-                booking={b}
-                confirming={confirmingId === b.id}
-                cancelling={cancelMutation.isPending && cancelMutation.variables === b.id}
-                onView={() => navigate(`/trips/${b.id}`, { state: { booking: b } })}
-                onRequestCancel={() => setConfirmingId(b.id)}
-                onConfirmCancel={() => cancelMutation.mutate(b.id)}
-                onDismissCancel={() => setConfirmingId(null)}
-              />
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4, delay: i * 0.04, ease: [0.16, 1, 0.3, 1] }}
+              >
+                <BookingCard
+                  booking={b}
+                  confirming={confirmingId === b.id}
+                  cancelling={cancelMutation.isPending && cancelMutation.variables === b.id}
+                  onView={() => navigate(`/trips/${b.id}`, { state: { booking: b } })}
+                  onRequestCancel={() => setConfirmingId(b.id)}
+                  onConfirmCancel={() => cancelMutation.mutate(b.id)}
+                  onDismissCancel={() => setConfirmingId(null)}
+                />
+              </motion.div>
             ))}
           </div>
         )}
@@ -134,13 +142,7 @@ export default function TripsPage() {
 }
 
 function BookingCard({
-  booking,
-  confirming,
-  cancelling,
-  onView,
-  onRequestCancel,
-  onConfirmCancel,
-  onDismissCancel,
+  booking, confirming, cancelling, onView, onRequestCancel, onConfirmCancel, onDismissCancel,
 }: {
   booking:         BookingListItem;
   confirming:      boolean;
@@ -152,38 +154,47 @@ function BookingCard({
 }) {
   const isCancellable = booking.status === 'CONFIRMED';
 
+  const statusStrip =
+    booking.status === 'CANCELLED' ? 'bg-danger' :
+    booking.status === 'COMPLETED' ? 'bg-primary-500' :
+    booking.status === 'NO_SHOW'   ? 'bg-muted' :
+                                     'bg-success';
+
   return (
     <div
-      className="bg-white rounded-xl border border-gray-200 p-6 cursor-pointer hover:shadow-md transition-shadow"
+      className="relative bento-card p-6 cursor-pointer overflow-hidden"
       onClick={onView}
     >
+      {/* Status gradient strip */}
+      <div className={`absolute left-0 top-0 bottom-0 w-1 ${statusStrip}`} />
+
       <div className="flex items-start justify-between gap-4 flex-wrap">
-        <div>
-          <div className="flex items-center gap-3 mb-1">
-            <h3 className="font-semibold text-gray-900">{booking.property.name}</h3>
+        <div className="min-w-0">
+          <div className="flex items-center gap-3 mb-1 flex-wrap">
+            <h3 className="font-display font-bold text-ink">{booking.property.name}</h3>
             <Badge status={booking.status} />
           </div>
-          <p className="text-sm text-gray-500">{booking.property.city}</p>
-          <p className="text-sm text-gray-500">{booking.roomType.name}</p>
+          <p className="text-sm text-muted">{booking.property.city}</p>
+          <p className="text-sm text-muted">{booking.roomType.name}</p>
         </div>
         <div className="text-right shrink-0">
-          <p className="text-lg font-bold text-gray-900">
+          <p className="text-lg font-display font-extrabold gradient-text">
             {formatPrice(Number(booking.totalPrice))}
           </p>
-          <p className="text-xs text-gray-400">total</p>
+          <p className="text-xs text-muted">total</p>
         </div>
       </div>
 
       <dl className="mt-4 grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm">
         {([
-          ['Check-in',        formatDate(booking.checkin)],
-          ['Check-out',       formatDate(booking.checkout)],
-          ['Confirmation #',  booking.confirmationNumber],
-          ['PIN',             booking.pin],
+          ['Check-in',       formatDate(booking.checkin)],
+          ['Check-out',      formatDate(booking.checkout)],
+          ['Confirmation #', booking.confirmationNumber],
+          ['PIN',            booking.pin],
         ] as [string, string][]).map(([label, value]) => (
           <div key={label}>
-            <dt className="text-gray-400 text-xs">{label}</dt>
-            <dd className="font-medium text-gray-900 font-mono tracking-wide">{value}</dd>
+            <dt className="text-muted text-xs uppercase tracking-wider">{label}</dt>
+            <dd className="font-semibold text-ink font-mono tracking-wide">{value}</dd>
           </div>
         ))}
       </dl>
@@ -198,10 +209,10 @@ function BookingCard({
 
       {isCancellable && confirming && (
         <div
-          className="mt-4 rounded-lg border border-red-200 bg-red-50 p-4"
+          className="mt-4 rounded-2xl border border-danger/30 bg-danger/10 p-4"
           onClick={(e) => e.stopPropagation()}
         >
-          <p className="text-sm font-medium text-red-800 mb-3">
+          <p className="text-sm font-semibold text-danger mb-3">
             Are you sure you want to cancel this trip?
           </p>
           <div className="flex justify-end gap-2">

@@ -1,5 +1,7 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import '../../../../core/network/app_image_cache_manager.dart';
+import '../../../../core/utils/image_utils.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/theme/app_theme.dart';
@@ -42,7 +44,6 @@ class _PropertyDetailPageState extends State<PropertyDetailPage> {
     return BlocBuilder<PropertyCubit, PropertyState>(
       builder: (context, state) {
         return Scaffold(
-          backgroundColor: AppColors.background,
           body: switch (state) {
             PropertyLoading() || PropertyInitial() => _buildLoading(),
             PropertyError(:final message) => _buildError(message),
@@ -56,19 +57,13 @@ class _PropertyDetailPageState extends State<PropertyDetailPage> {
 
   Widget _buildLoading() {
     return const Scaffold(
-      backgroundColor: AppColors.background,
-      body: Center(
-        child: CircularProgressIndicator(
-          valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
-        ),
-      ),
+      body: Center(child: CircularProgressIndicator()),
     );
   }
 
   Widget _buildError(String message) {
     return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: AppBar(backgroundColor: AppColors.primary),
+      appBar: AppBar(),
       body: Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -170,10 +165,12 @@ class _PropertyDetailPageState extends State<PropertyDetailPage> {
               itemCount: property.images.length,
               onPageChanged: (i) => setState(() => _imageIndex = i),
               itemBuilder: (_, i) => CachedNetworkImage(
-                imageUrl: property.images[i].url,
+                imageUrl: proxyImageUrl(property.images[i].url),
+                cacheManager: AppImageCacheManager(),
                 fit: BoxFit.cover,
                 width: double.infinity,
-                placeholder: (_, __) => Container(color: const Color(0xFFE8EDF5)),
+                placeholder: (context, url) =>
+                    Container(color: const Color(0xFFE8EDF5)),
                 errorWidget: (_, __, ___) =>
                     Container(color: const Color(0xFFE8EDF5)),
               ),

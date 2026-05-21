@@ -1,6 +1,11 @@
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
+import { motion } from 'framer-motion';
+import {
+  MapPin, Star, Users, Utensils, CheckCircle2, XCircle, Calendar, Moon,
+  type LucideIcon,
+} from 'lucide-react';
 import { propertiesApi } from '../../api/properties.api';
 import { bookingsApi } from '../../api/bookings.api';
 import { useCheckoutStore } from '../../store/checkout.store';
@@ -77,32 +82,37 @@ export default function PropertyDetailPage() {
 
   if (isLoading)
     return (
-      <>
+      <div className="min-h-screen bg-bg">
         <Header />
         <div className="flex justify-center py-24">
           <Spinner size="lg" />
         </div>
-      </>
+      </div>
     );
 
   if (isError || !property)
     return (
-      <>
+      <div className="min-h-screen bg-bg">
         <Header />
         <PageWrapper>
           <ErrorBanner message={getApiError(error)} />
         </PageWrapper>
-      </>
+      </div>
     );
 
   const amenities = property.amenities as string[];
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-bg">
       <Header />
       <PageWrapper>
         {/* Cover */}
-        <div className="h-64 sm:h-80 bg-gray-200 rounded-xl overflow-hidden mb-6">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.98 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+          className="relative h-64 sm:h-96 rounded-3xl overflow-hidden mb-6 shadow-card-lg"
+        >
           {property.images[0] ? (
             <img
               src={property.images[0].url}
@@ -110,47 +120,53 @@ export default function PropertyDetailPage() {
               className="w-full h-full object-cover"
             />
           ) : (
-            <div className="w-full h-full flex items-center justify-center text-gray-300">
+            <div className="w-full h-full flex items-center justify-center bg-surface-elev text-muted">
               No image available
             </div>
           )}
-        </div>
+          <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/10 to-transparent" />
+          <div className="absolute bottom-6 left-6 right-6 text-white">
+            <p className="inline-flex items-center gap-1 text-xs uppercase font-bold tracking-widest bg-white/15 backdrop-blur-md px-2.5 py-1 rounded-full">
+              {property.category.toLowerCase()}
+            </p>
+            <h1 className="font-display text-3xl sm:text-4xl font-extrabold mt-2 drop-shadow">
+              {property.name}
+            </h1>
+            <p className="mt-1 text-white/90 inline-flex items-center gap-1.5">
+              <MapPin size={14} /> {property.address}, {property.city}
+            </p>
+          </div>
+        </motion.div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Left */}
-          <div className="lg:col-span-2 space-y-4">
-            <div className="bg-white rounded-xl border border-gray-200 p-6">
+          <div className="lg:col-span-2 space-y-5">
+            <div className="bento-card p-6" data-aos="fade-up">
               <div className="flex items-start justify-between gap-4">
                 <div>
-                  <h1 className="text-2xl font-bold text-gray-900">{property.name}</h1>
-                  <p className="text-gray-500 mt-1">
-                    {property.address}, {property.city}
-                  </p>
-                  <p className="text-sm text-gray-400 capitalize mt-0.5">
-                    {property.category.toLowerCase()}
-                  </p>
+                  <h2 className="font-display text-xl font-bold text-ink">About this property</h2>
                 </div>
                 {property.starRating && (
-                  <span className="flex items-center gap-1 text-yellow-500 font-bold shrink-0">
-                    ★ {property.starRating}
+                  <span className="inline-flex items-center gap-1.5 bg-star/15 text-star px-3 py-1 rounded-full text-sm font-bold shrink-0">
+                    <Star size={14} fill="currentColor" /> {property.starRating}
                   </span>
                 )}
               </div>
               {property.description && (
-                <p className="mt-4 text-gray-600 text-sm leading-relaxed">
+                <p className="mt-4 text-muted text-sm leading-relaxed">
                   {property.description}
                 </p>
               )}
               {amenities.length > 0 && (
-                <div className="mt-4">
-                  <h3 className="text-sm font-semibold text-gray-800 mb-2">Amenities</h3>
+                <div className="mt-5">
+                  <h3 className="text-xs font-bold text-ink uppercase tracking-wider mb-3">Amenities</h3>
                   <div className="flex flex-wrap gap-2">
                     {amenities.map((a) => (
                       <span
                         key={a}
-                        className="bg-gray-100 text-gray-700 text-xs rounded-full px-3 py-1"
+                        className="inline-flex items-center gap-1.5 bg-surface-elev border border-line text-ink text-xs rounded-full px-3 py-1.5 font-medium"
                       >
-                        {a}
+                        <CheckCircle2 size={12} className="text-success" /> {a}
                       </span>
                     ))}
                   </div>
@@ -158,44 +174,43 @@ export default function PropertyDetailPage() {
               )}
             </div>
 
-            <h2 className="text-xl font-bold text-gray-900">Available Rooms</h2>
+            <h2 className="font-display text-xl font-bold text-ink">Available rooms</h2>
             {property.roomTypes.length === 0 ? (
-              <p className="text-gray-400 text-sm">No rooms available for this property yet.</p>
+              <p className="text-muted text-sm">No rooms available for this property yet.</p>
             ) : (
               <div className="space-y-3">
-                {property.roomTypes.map((room) => (
-                  <RoomCard
+                {property.roomTypes.map((room, i) => (
+                  <motion.div
                     key={room.id}
-                    room={room}
-                    nights={nights}
-                    loading={holdMutation.isPending && holdMutation.variables === room.id}
-                    onReserve={() => handleReserve(room.id)}
-                  />
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.4, delay: i * 0.05, ease: [0.16, 1, 0.3, 1] }}
+                  >
+                    <RoomCard
+                      room={room}
+                      nights={nights}
+                      loading={holdMutation.isPending && holdMutation.variables === room.id}
+                      onReserve={() => handleReserve(room.id)}
+                    />
+                  </motion.div>
                 ))}
               </div>
             )}
           </div>
 
           {/* Right: stay summary */}
-          <div>
-            <div className="bg-white rounded-xl border border-gray-200 p-6 sticky top-20">
-              <h3 className="font-semibold text-gray-900 mb-3">Your stay</h3>
+          <div data-aos="fade-left" data-aos-delay="100">
+            <div className="glass-card p-6 sticky top-24 shadow-card-lg">
+              <h3 className="font-display font-bold text-ink mb-4 text-lg">Your stay</h3>
               {checkin && checkout ? (
-                <dl className="space-y-2 text-sm">
-                  {[
-                    ['Check-in', checkin],
-                    ['Check-out', checkout],
-                    ['Nights', nights],
-                    ['Guests', `${adults} adult${adults !== 1 ? 's' : ''}`],
-                  ].map(([label, value]) => (
-                    <div key={label as string} className="flex justify-between">
-                      <dt className="text-gray-500">{label}</dt>
-                      <dd className="font-medium text-gray-900">{value}</dd>
-                    </div>
-                  ))}
+                <dl className="space-y-3 text-sm">
+                  <Row Icon={Calendar} label="Check-in"  value={checkin} />
+                  <Row Icon={Calendar} label="Check-out" value={checkout} />
+                  <Row Icon={Moon}     label="Nights"    value={nights} />
+                  <Row Icon={Users}    label="Guests"    value={`${adults} adult${adults !== 1 ? 's' : ''}`} />
                 </dl>
               ) : (
-                <p className="text-sm text-gray-400">
+                <p className="text-sm text-muted">
                   No dates selected. Go back to search and pick check-in / check-out dates.
                 </p>
               )}
@@ -208,11 +223,25 @@ export default function PropertyDetailPage() {
   );
 }
 
+function Row({
+  Icon, label, value,
+}: {
+  Icon: LucideIcon;
+  label: string;
+  value: string | number;
+}) {
+  return (
+    <div className="flex items-center justify-between">
+      <dt className="inline-flex items-center gap-2 text-muted">
+        <Icon size={14} /> {label}
+      </dt>
+      <dd className="font-semibold text-ink">{value}</dd>
+    </div>
+  );
+}
+
 function RoomCard({
-  room,
-  nights,
-  loading,
-  onReserve,
+  room, nights, loading, onReserve,
 }: {
   room: RoomType;
   nights: number;
@@ -223,36 +252,50 @@ function RoomCard({
   const total = pricePerNight * nights;
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 p-5 flex flex-col sm:flex-row sm:items-start gap-4">
-      <div className="flex-1">
-        <h3 className="font-semibold text-gray-900">{room.name}</h3>
+    <div className="bento-card p-5 flex flex-col sm:flex-row sm:items-start gap-4">
+      <div className="flex-1 min-w-0">
+        <h3 className="font-display font-semibold text-ink">{room.name}</h3>
         {room.description && (
-          <p className="text-sm text-gray-500 mt-1">{room.description}</p>
+          <p className="text-sm text-muted mt-1">{room.description}</p>
         )}
-        <div className="flex flex-wrap gap-3 mt-2 text-xs text-gray-500">
-          <span>👤 Up to {room.maxOccupancy} guests</span>
-          <span>
-            🍽 {room.mealPlan === 'BREAKFAST' ? 'Breakfast included' : 'Room only'}
-          </span>
-          <span>
-            {room.cancellationPolicy === 'FLEXIBLE'
-              ? '✅ Free cancellation'
-              : '❌ Non-refundable'}
-          </span>
+        <div className="flex flex-wrap gap-2 mt-3">
+          <Chip Icon={Users}    label={`Up to ${room.maxOccupancy} guests`} />
+          <Chip Icon={Utensils} label={room.mealPlan === 'BREAKFAST' ? 'Breakfast included' : 'Room only'} />
+          {room.cancellationPolicy === 'FLEXIBLE'
+            ? <Chip Icon={CheckCircle2} label="Free cancellation" tone="success" />
+            : <Chip Icon={XCircle}      label="Non-refundable"    tone="danger"  />}
         </div>
       </div>
-      <div className="text-right shrink-0">
-        <p className="text-lg font-bold text-gray-900">
+      <div className="text-right shrink-0 self-end sm:self-start">
+        <p className="text-2xl font-display font-extrabold gradient-text">
           {formatPrice(pricePerNight)}
-          <span className="text-xs text-gray-400 font-normal"> /night</span>
         </p>
+        <p className="text-xs text-muted">per night</p>
         {nights > 1 && (
-          <p className="text-sm text-gray-500">{formatPrice(total)} total</p>
+          <p className="text-sm text-ink font-semibold mt-1">{formatPrice(total)} total</p>
         )}
-        <Button size="sm" className="mt-3" onClick={onReserve} loading={loading}>
+        <Button size="sm" variant="gradient" className="mt-3" onClick={onReserve} loading={loading}>
           Reserve
         </Button>
       </div>
     </div>
+  );
+}
+
+function Chip({
+  Icon, label, tone = 'neutral',
+}: {
+  Icon: LucideIcon;
+  label: string;
+  tone?: 'neutral' | 'success' | 'danger';
+}) {
+  const skin =
+    tone === 'success' ? 'bg-success/12 text-success border-success/30' :
+    tone === 'danger'  ? 'bg-danger/12  text-danger  border-danger/30' :
+                         'bg-surface-elev text-muted border-line';
+  return (
+    <span className={`inline-flex items-center gap-1 text-[11px] font-medium rounded-full px-2.5 py-1 border ${skin}`}>
+      <Icon size={11} /> {label}
+    </span>
   );
 }

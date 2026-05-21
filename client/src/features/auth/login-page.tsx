@@ -10,6 +10,7 @@ import { getApiError } from '../../utils/error';
 import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
 import ErrorBanner from '../../components/ui/ErrorBanner';
+import AuthLayout from './auth-layout';
 
 const schema = z.object({
   email: z.string().email('Invalid email'),
@@ -41,51 +42,38 @@ export default function LoginPage() {
   });
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#f2f6fa] px-4">
-      <div className="w-full max-w-md">
-        {/* Logo */}
-        <div className="text-center mb-6">
-          <Link to="/" className="inline-flex items-center gap-1">
-            <span className="text-[#003580] font-extrabold text-2xl tracking-tight">StayBook</span>
-            <span className="text-[#FFCC00] text-2xl font-extrabold">.</span>
+    <AuthLayout
+      title="Welcome back"
+      subtitle="Sign in to continue your journey"
+      footer={
+        <>
+          Don&apos;t have an account?{' '}
+          <Link to="/register" className="text-primary-600 hover:underline font-semibold">
+            Register
           </Link>
-        </div>
-
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
-          <div className="mb-6 text-center">
-            <h1 className="text-xl font-bold text-gray-900">Sign in</h1>
-            <p className="text-sm text-gray-500 mt-1">Welcome back to StayBook</p>
-          </div>
-
-          <form onSubmit={handleSubmit((d) => mutation.mutate(d))} className="space-y-4">
-            {mutation.isError && <ErrorBanner message={getApiError(mutation.error)} />}
-            <Input
-              label="Email"
-              type="email"
-              placeholder="you@example.com"
-              error={errors.email?.message}
-              {...register('email')}
-            />
-            <Input
-              label="Password"
-              type="password"
-              placeholder="••••••••"
-              error={errors.password?.message}
-              {...register('password')}
-            />
-            <Button type="submit" loading={mutation.isPending} className="w-full">
-              Sign in
-            </Button>
-          </form>
-
-          <p className="mt-4 text-center text-sm text-gray-600">
-            Don&apos;t have an account?{' '}
-            <Link to="/register" className="text-[#003580] hover:underline font-medium">
-              Register
-            </Link>
-          </p>
-        </div>
-      </div>
-    </div>
+        </>
+      }
+    >
+      <form onSubmit={handleSubmit((d) => mutation.mutate(d))} className="space-y-4">
+        {mutation.isError && <ErrorBanner message={getApiError(mutation.error)} />}
+        <Input
+          label="Email"
+          type="email"
+          placeholder="you@example.com"
+          error={errors.email?.message}
+          {...register('email')}
+        />
+        <Input
+          label="Password"
+          type="password"
+          placeholder="••••••••"
+          error={errors.password?.message}
+          {...register('password')}
+        />
+        <Button type="submit" variant="gradient" size="lg" loading={mutation.isPending} className="w-full">
+          Sign in
+        </Button>
+      </form>
+    </AuthLayout>
   );
 }

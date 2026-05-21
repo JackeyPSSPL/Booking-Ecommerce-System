@@ -1,6 +1,7 @@
-import { createBrowserRouter, RouterProvider, Navigate } from 'react-router-dom';
+import { createBrowserRouter, RouterProvider, Navigate, Outlet } from 'react-router-dom';
 import { lazy, Suspense } from 'react';
 import { useAuthStore } from '../store/auth.store';
+import ScrollToTop from '../components/scroll-to-top';
 
 const LoginPage        = lazy(() => import('../features/auth/login-page'));
 const RegisterPage     = lazy(() => import('../features/auth/register-page'));
@@ -43,71 +44,89 @@ function ProtectedRoute({ children, role }: { children: React.ReactNode; role?: 
   return <>{children}</>;
 }
 
+/**
+ * Root layout — mounts global concerns that need router context
+ * (scroll-restoration, future analytics page-views, etc.) above every route.
+ */
+function RootLayout(): React.ReactElement {
+  return (
+    <>
+      <ScrollToTop />
+      <Outlet />
+    </>
+  );
+}
+
 const router = createBrowserRouter([
-  { path: '/', element: <HomeRoute /> },
-  { path: '/login', element: <LoginPage /> },
-  { path: '/register', element: <RegisterPage /> },
-  { path: '/verify-otp', element: <OtpPage /> },
-  { path: '/property/:id', element: <PropertyDetail /> },
   {
-    path: '/checkout/details',
-    element: <ProtectedRoute><GuestDetailsPage /></ProtectedRoute>,
-  },
-  {
-    path: '/checkout/payment',
-    element: <ProtectedRoute><PaymentPage /></ProtectedRoute>,
-  },
-  {
-    path: '/booking/confirmation/:bookingId',
-    element: <ProtectedRoute><ConfirmationPage /></ProtectedRoute>,
-  },
-  {
-    path: '/trips',
-    element: <ProtectedRoute><TripsPage /></ProtectedRoute>,
-  },
-  {
-    path: '/trips/:bookingId',
-    element: <ProtectedRoute><TripDetailPage /></ProtectedRoute>,
-  },
-  {
-    path: '/partner/dashboard',
-    element: <ProtectedRoute role="PARTNER"><PartnerDashboard /></ProtectedRoute>,
-  },
-  {
-    path: '/partner/onboarding',
-    element: <ProtectedRoute role="PARTNER"><PartnerOnboarding /></ProtectedRoute>,
-  },
-  {
-    path: '/partner/bookings',
-    element: <ProtectedRoute role="PARTNER"><PartnerBookings /></ProtectedRoute>,
-  },
-  {
-    path: '/partner/properties/:id/availability',
-    element: <ProtectedRoute role="PARTNER"><PartnerAvailability /></ProtectedRoute>,
-  },
-  {
-    path: '/partner/properties/:id/edit',
-    element: <ProtectedRoute role="PARTNER"><PartnerPropertyEdit /></ProtectedRoute>,
-  },
-  {
-    path: '/partner/earnings',
-    element: <ProtectedRoute role="PARTNER"><PartnerEarnings /></ProtectedRoute>,
-  },
-  {
-    path: '/admin/dashboard',
-    element: <ProtectedRoute role="ADMIN"><AdminDashboard /></ProtectedRoute>,
-  },
-  {
-    path: '/admin/users',
-    element: <ProtectedRoute role="ADMIN"><AdminUsers /></ProtectedRoute>,
-  },
-  {
-    path: '/admin/properties',
-    element: <ProtectedRoute role="ADMIN"><AdminProperties /></ProtectedRoute>,
-  },
-  {
-    path: '/admin/bookings',
-    element: <ProtectedRoute role="ADMIN"><AdminBookings /></ProtectedRoute>,
+    element: <RootLayout />,
+    children: [
+      { path: '/', element: <HomeRoute /> },
+      { path: '/login', element: <LoginPage /> },
+      { path: '/register', element: <RegisterPage /> },
+      { path: '/verify-otp', element: <OtpPage /> },
+      { path: '/property/:id', element: <PropertyDetail /> },
+      {
+        path: '/checkout/details',
+        element: <ProtectedRoute><GuestDetailsPage /></ProtectedRoute>,
+      },
+      {
+        path: '/checkout/payment',
+        element: <ProtectedRoute><PaymentPage /></ProtectedRoute>,
+      },
+      {
+        path: '/booking/confirmation/:bookingId',
+        element: <ProtectedRoute><ConfirmationPage /></ProtectedRoute>,
+      },
+      {
+        path: '/trips',
+        element: <ProtectedRoute><TripsPage /></ProtectedRoute>,
+      },
+      {
+        path: '/trips/:bookingId',
+        element: <ProtectedRoute><TripDetailPage /></ProtectedRoute>,
+      },
+      {
+        path: '/partner/dashboard',
+        element: <ProtectedRoute role="PARTNER"><PartnerDashboard /></ProtectedRoute>,
+      },
+      {
+        path: '/partner/onboarding',
+        element: <ProtectedRoute role="PARTNER"><PartnerOnboarding /></ProtectedRoute>,
+      },
+      {
+        path: '/partner/bookings',
+        element: <ProtectedRoute role="PARTNER"><PartnerBookings /></ProtectedRoute>,
+      },
+      {
+        path: '/partner/properties/:id/availability',
+        element: <ProtectedRoute role="PARTNER"><PartnerAvailability /></ProtectedRoute>,
+      },
+      {
+        path: '/partner/properties/:id/edit',
+        element: <ProtectedRoute role="PARTNER"><PartnerPropertyEdit /></ProtectedRoute>,
+      },
+      {
+        path: '/partner/earnings',
+        element: <ProtectedRoute role="PARTNER"><PartnerEarnings /></ProtectedRoute>,
+      },
+      {
+        path: '/admin/dashboard',
+        element: <ProtectedRoute role="ADMIN"><AdminDashboard /></ProtectedRoute>,
+      },
+      {
+        path: '/admin/users',
+        element: <ProtectedRoute role="ADMIN"><AdminUsers /></ProtectedRoute>,
+      },
+      {
+        path: '/admin/properties',
+        element: <ProtectedRoute role="ADMIN"><AdminProperties /></ProtectedRoute>,
+      },
+      {
+        path: '/admin/bookings',
+        element: <ProtectedRoute role="ADMIN"><AdminBookings /></ProtectedRoute>,
+      },
+    ],
   },
 ]);
 

@@ -1,5 +1,7 @@
-import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter/material.dart';
+import '../../../../core/network/app_image_cache_manager.dart';
+import '../../../../core/utils/image_utils.dart';
 import '../../domain/entities/destination_entity.dart';
 
 const _cityImages = {
@@ -52,10 +54,26 @@ class ExploreCityCard extends StatelessWidget {
             fit: StackFit.expand,
             children: [
               CachedNetworkImage(
-                imageUrl: imageUrl,
+                imageUrl: proxyImageUrl(imageUrl),
+                cacheManager: AppImageCacheManager(),
                 fit: BoxFit.cover,
-                placeholder: (context, url) => Container(color: Colors.grey[300]),
-                errorWidget: (context, url, error) => Container(color: Colors.grey[300]),
+                placeholder: (context, url) => Container(
+                  color: Colors.grey[300],
+                  child: const Center(
+                    child: SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
+                  ),
+                ),
+                errorWidget: (context, url, error) => Container(
+                  color: Colors.grey[400],
+                  child: const Center(
+                    child: Icon(Icons.location_city_rounded,
+                        size: 40, color: Colors.white70),
+                  ),
+                ),
               ),
               Container(
                 decoration: BoxDecoration(

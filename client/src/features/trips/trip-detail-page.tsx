@@ -1,6 +1,12 @@
 import { useEffect, useRef } from 'react';
 import { useLocation, useNavigate, useParams, useSearchParams, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
+import { motion } from 'framer-motion';
+import {
+  ArrowLeft, CheckCircle2, Copy, MapPin, Calendar, Users, BedDouble,
+  ClipboardList, IdCard, Clock, Phone, Mail, Printer, Search as SearchIcon, RefreshCw, Hotel,
+  type LucideIcon,
+} from 'lucide-react';
 import { bookingsApi } from '../../api/bookings.api';
 import { BookingListItem } from '../../types';
 import { formatDate, formatPrice, formatNights } from '../../utils/format';
@@ -19,13 +25,13 @@ const CONFETTI_CSS = `
   pointer-events: none; z-index: 9999;
 }
 `;
-const COLORS = ['#003580', '#FFCC00', '#00875A', '#D32F2F', '#9C27B0', '#FF9800'];
+const COLORS = ['#4F46E5', '#818CF8', '#F97066', '#10B981', '#F59E0B', '#A78BFA'];
 
 function spawnConfetti() {
   const style = document.createElement('style');
   style.textContent = CONFETTI_CSS;
   document.head.appendChild(style);
-  for (let i = 0; i < 80; i++) {
+  for (let i = 0; i < 90; i++) {
     const el = document.createElement('div');
     el.className = 'confetti-piece';
     el.style.left = `${Math.random() * 100}vw`;
@@ -43,21 +49,25 @@ function CopyButton({ value }: { value: string }) {
     <button
       onClick={copy}
       title="Copy"
-      className="ml-2 text-gray-400 hover:text-[#003580] transition-colors"
+      className="ml-2 text-muted hover:text-primary-600 transition-colors btn-press"
     >
-      <svg className="w-3.5 h-3.5 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-          d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-      </svg>
+      <Copy size={14} />
     </button>
   );
 }
 
-const STATUS_CONFIG: Record<string, { label: string; headline: string; color: string; bg: string; border: string }> = {
-  CONFIRMED: { label: 'Confirmed', headline: 'Your booking is confirmed',         color: 'text-green-700',  bg: 'bg-green-50',  border: 'border-green-200' },
-  CANCELLED: { label: 'Cancelled', headline: 'This booking has been cancelled',   color: 'text-red-700',    bg: 'bg-red-50',    border: 'border-red-200'   },
-  COMPLETED: { label: 'Completed', headline: 'Your stay has been completed',      color: 'text-blue-700',   bg: 'bg-blue-50',   border: 'border-blue-200'  },
-  NO_SHOW:   { label: 'No Show',   headline: 'This booking was marked as no-show',color: 'text-orange-700', bg: 'bg-orange-50', border: 'border-orange-200'},
+const STATUS_CONFIG: Record<string, { label: string; headline: string; tone: 'success' | 'danger' | 'primary' | 'muted' }> = {
+  CONFIRMED: { label: 'Confirmed', headline: 'Your booking is confirmed',          tone: 'success' },
+  CANCELLED: { label: 'Cancelled', headline: 'This booking has been cancelled',    tone: 'danger'  },
+  COMPLETED: { label: 'Completed', headline: 'Your stay has been completed',       tone: 'primary' },
+  NO_SHOW:   { label: 'No Show',   headline: 'This booking was marked as no-show', tone: 'muted'   },
+};
+
+const TONE_CLASSES: Record<string, { container: string; text: string }> = {
+  success: { container: 'bg-success/10 border-success/30',     text: 'text-success' },
+  danger:  { container: 'bg-danger/10  border-danger/30',      text: 'text-danger'  },
+  primary: { container: 'bg-primary-500/10 border-primary-500/30', text: 'text-primary-600' },
+  muted:   { container: 'bg-muted/10  border-muted/30',        text: 'text-muted'   },
 };
 
 export default function TripDetailPage() {
@@ -90,7 +100,7 @@ export default function TripDetailPage() {
 
   if (!hasFullData && isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-bg">
         <Header />
         <PageWrapper>
           <div className="flex justify-center py-20"><Spinner size="lg" /></div>
@@ -101,12 +111,14 @@ export default function TripDetailPage() {
 
   if (!booking) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-bg">
         <Header />
         <PageWrapper>
-          <div className="text-center py-20">
-            <p className="text-gray-500 mb-4">Booking not found.</p>
-            <Link to="/trips" className="text-[#003580] hover:underline text-sm">← Back to My Stay Booked</Link>
+          <div className="text-center py-20 bento-card p-10">
+            <p className="text-muted mb-4">Booking not found.</p>
+            <Link to="/trips" className="text-primary-600 hover:underline text-sm font-semibold">
+              ← Back to My Stay Booked
+            </Link>
           </div>
         </PageWrapper>
       </div>
@@ -114,6 +126,7 @@ export default function TripDetailPage() {
   }
 
   const status   = STATUS_CONFIG[booking.status] ?? STATUS_CONFIG.CONFIRMED;
+  const tone     = TONE_CLASSES[status.tone];
   const nights   = formatNights(booking.checkin, booking.checkout);
   const guestStr = [
     `${booking.adults} adult${booking.adults !== 1 ? 's' : ''}`,
@@ -121,58 +134,55 @@ export default function TripDetailPage() {
   ].filter(Boolean).join(', ');
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-bg">
       <Header />
 
-      {/* Print styles */}
       <style>{`@media print { header, .no-print { display: none !important; } body { background: white; } }`}</style>
 
       <PageWrapper>
-        {/* Back link — hidden when arriving directly from payment */}
         {!isNewBooking && (
           <button
             onClick={() => navigate('/trips')}
-            className="flex items-center gap-1.5 text-sm text-[#003580] hover:underline mb-5 no-print"
+            className="inline-flex items-center gap-1.5 text-sm text-primary-600 hover:underline font-semibold mb-5 no-print"
           >
-            ← My Stay Booked
+            <ArrowLeft size={14} /> My Stay Booked
           </button>
         )}
 
-        {/* ── NEW BOOKING: Hero confirmation banner ──────────────────── */}
         {isNewBooking ? (
           <>
-            {/* Hero */}
-            <div className="mb-6 rounded-2xl border border-green-200 bg-gradient-to-r from-green-50 to-emerald-50 p-6 sm:p-8">
-              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-5">
-                {/* Check circle */}
-                <div className="w-16 h-16 rounded-full bg-green-500 flex items-center justify-center shrink-0 shadow-md">
-                  <svg className="w-9 h-9 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
-                  </svg>
+            <motion.div
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+              className="mb-6 rounded-3xl border border-success/30 bg-gradient-to-br from-success/10 via-success/5 to-primary-500/5 p-6 sm:p-8 overflow-hidden relative"
+            >
+              <div className="absolute inset-0 bg-gradient-mesh opacity-40 pointer-events-none" />
+              <div className="relative flex flex-col sm:flex-row items-start sm:items-center gap-5">
+                <div className="w-16 h-16 rounded-full bg-success flex items-center justify-center shrink-0 shadow-glow text-white">
+                  <CheckCircle2 size={36} strokeWidth={2.5} />
                 </div>
-                {/* Text */}
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs font-bold text-green-600 uppercase tracking-widest mb-1">Payment successful</p>
-                  <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Booking Confirmed!</h1>
-                  <p className="text-sm text-gray-500">
-                    A confirmation has been sent to <span className="font-medium text-gray-700">{booking.guestName}</span>
+                  <p className="text-xs font-bold text-success uppercase tracking-widest mb-1">Payment successful</p>
+                  <h1 className="font-display text-2xl sm:text-3xl font-extrabold text-ink mb-2">Booking Confirmed!</h1>
+                  <p className="text-sm text-muted">
+                    A confirmation has been sent to <span className="font-semibold text-ink">{booking.guestName}</span>
                   </p>
                 </div>
-                {/* Numbers */}
-                <div className="flex flex-col gap-2 shrink-0 min-w-[180px] bg-white rounded-xl border border-green-200 px-4 py-3">
+                <div className="flex flex-col gap-2 shrink-0 min-w-[200px] glass-card px-4 py-3">
                   <div>
-                    <p className="text-xs text-gray-400 mb-0.5">Confirmation #</p>
+                    <p className="text-xs text-muted mb-0.5">Confirmation #</p>
                     <div className="flex items-center">
-                      <span className="font-bold font-mono tracking-wide text-gray-900 text-sm">
+                      <span className="font-bold font-mono tracking-wide text-ink text-sm">
                         {booking.confirmationNumber}
                       </span>
                       <CopyButton value={booking.confirmationNumber} />
                     </div>
                   </div>
-                  <div className="border-t border-gray-100 pt-2">
-                    <p className="text-xs text-gray-400 mb-0.5">PIN code</p>
+                  <div className="border-t border-line/60 pt-2">
+                    <p className="text-xs text-muted mb-0.5">PIN code</p>
                     <div className="flex items-center">
-                      <span className="font-bold font-mono tracking-widest text-xl text-[#003580]">
+                      <span className="font-display font-extrabold font-mono tracking-widest text-xl gradient-text">
                         {booking.pin}
                       </span>
                       <CopyButton value={booking.pin} />
@@ -180,102 +190,80 @@ export default function TripDetailPage() {
                   </div>
                 </div>
               </div>
-            </div>
+            </motion.div>
 
-            {/* Detail grid */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 mb-6">
-              {/* Left — property + price */}
               <div className="lg:col-span-2 space-y-4">
-                <div className="bg-white rounded-xl border border-gray-200 p-6">
-                  <h2 className="text-lg font-bold text-gray-900 mb-1">{booking.property.name}</h2>
-                  <p className="text-sm text-gray-500 mb-5">📍 {booking.property.city}</p>
+                <div className="bento-card p-6">
+                  <h2 className="font-display text-lg font-bold text-ink mb-1">{booking.property.name}</h2>
+                  <p className="text-sm text-muted mb-5 inline-flex items-center gap-1">
+                    <MapPin size={12} /> {booking.property.city}
+                  </p>
 
                   <div className="grid grid-cols-2 gap-x-8 gap-y-5 text-sm">
-                    <div>
-                      <p className="text-xs text-gray-400 uppercase tracking-wider mb-1">Check-in</p>
-                      <p className="font-bold text-gray-900 text-base">{formatDate(booking.checkin)}</p>
-                      <p className="text-xs text-gray-400">from 14:00</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-gray-400 uppercase tracking-wider mb-1">Check-out</p>
-                      <p className="font-bold text-gray-900 text-base">{formatDate(booking.checkout)}</p>
-                      <p className="text-xs text-gray-400">until 12:00</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-gray-400 uppercase tracking-wider mb-1">Guests</p>
-                      <p className="font-medium text-gray-900">{guestStr}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-gray-400 uppercase tracking-wider mb-1">Room</p>
-                      <p className="font-medium text-gray-900">{booking.roomType.name}</p>
-                      <p className="text-xs text-gray-400">{nights} night{nights !== 1 ? 's' : ''}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-gray-400 uppercase tracking-wider mb-1">Guest name</p>
-                      <p className="font-medium text-gray-900">{booking.guestName}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-gray-400 uppercase tracking-wider mb-1">Booked on</p>
-                      <p className="font-medium text-gray-900">
-                        {new Date(booking.createdAt).toLocaleDateString('en-IN', {
-                          day: 'numeric', month: 'short', year: 'numeric',
-                        })}
-                      </p>
-                    </div>
+                    <Field label="Check-in"   value={formatDate(booking.checkin)}  sub="from 14:00" />
+                    <Field label="Check-out"  value={formatDate(booking.checkout)} sub="until 12:00" />
+                    <Field label="Guests"     value={guestStr} />
+                    <Field label="Room"       value={booking.roomType.name} sub={`${nights} night${nights !== 1 ? 's' : ''}`} />
+                    <Field label="Guest name" value={booking.guestName} />
+                    <Field
+                      label="Booked on"
+                      value={new Date(booking.createdAt).toLocaleDateString('en-IN', {
+                        day: 'numeric', month: 'short', year: 'numeric',
+                      })}
+                    />
                   </div>
 
-                  <div className="mt-5 border-t border-gray-100 pt-4 flex items-center justify-between">
-                    <span className="text-sm text-gray-500">Total paid (incl. taxes)</span>
-                    <span className="text-2xl font-bold text-[#003580]">
+                  <div className="mt-5 border-t border-line/60 pt-4 flex items-center justify-between">
+                    <span className="text-sm text-muted">Total paid (incl. taxes)</span>
+                    <span className="font-display text-2xl font-extrabold gradient-text">
                       {formatPrice(Number(booking.totalPrice))}
                     </span>
                   </div>
                 </div>
               </div>
 
-              {/* Right — actions */}
               <div className="space-y-4">
-                <div className="bg-white rounded-xl border border-gray-200 p-5 space-y-2 no-print">
+                <div className="bento-card p-5 space-y-2 no-print">
                   <Link
                     to="/trips"
-                    className="flex items-center justify-center gap-2 w-full text-sm font-semibold text-white bg-[#003580] hover:bg-[#00224F] rounded-lg py-2.5 transition-colors"
+                    className="inline-flex items-center justify-center gap-2 w-full text-sm font-semibold text-white rounded-md py-2.5 shadow-card hover:-translate-y-0.5 transition-all btn-press [background-image:linear-gradient(135deg,hsl(var(--color-primary-500))_0%,hsl(var(--color-accent-500))_100%)]"
                   >
                     Manage my booking
                   </Link>
                   <button
                     onClick={() => window.print()}
-                    className="w-full text-sm font-medium text-gray-700 hover:bg-gray-50 border border-gray-200 rounded-lg py-2.5 transition-colors"
+                    className="w-full inline-flex items-center justify-center gap-1 text-sm font-semibold text-ink hover:bg-surface-elev border border-line rounded-md py-2.5 transition-colors btn-press"
                   >
-                    🖨 Save as PDF
+                    <Printer size={14} /> Save as PDF
                   </button>
                   <Link
                     to={`/property/${booking.property.id}`}
-                    className="block w-full text-center text-sm font-medium text-gray-600 hover:bg-gray-50 border border-gray-200 rounded-lg py-2.5 transition-colors"
+                    className="block w-full text-center text-sm font-semibold text-muted hover:text-ink hover:bg-surface-elev border border-line rounded-md py-2.5 transition-colors"
                   >
                     View property
                   </Link>
                   <Link
                     to="/"
-                    className="block w-full text-center text-sm font-medium text-gray-600 hover:bg-gray-50 border border-gray-200 rounded-lg py-2.5 transition-colors"
+                    className="block w-full text-center text-sm font-semibold text-muted hover:text-ink hover:bg-surface-elev border border-line rounded-md py-2.5 transition-colors inline-flex items-center justify-center gap-1.5"
                   >
-                    🔍 Find another place
+                    <SearchIcon size={14} /> Find another place
                   </Link>
                 </div>
               </div>
             </div>
 
-            {/* What's next */}
-            <div className="rounded-xl border border-blue-100 bg-blue-50 p-6 no-print">
-              <h2 className="font-semibold text-gray-800 mb-3 text-sm uppercase tracking-wider">What's next?</h2>
-              <ul className="space-y-3 text-sm text-gray-600">
+            <div className="bento-card p-6 no-print">
+              <h2 className="font-display font-bold text-ink mb-3 text-sm uppercase tracking-wider">What&apos;s next?</h2>
+              <ul className="space-y-3 text-sm text-muted">
                 {[
-                  ['🪪', 'Carry a valid photo ID at check-in — your PIN may be required.'],
-                  ['⏰', 'Standard check-in is 2:00 PM. Early check-in subject to availability.'],
-                  ['📞', 'Need to change your booking? Visit My Stay Booked or contact the property directly.'],
-                  ['✉️', 'A confirmation email with all details has been sent to the guest.'],
-                ].map(([icon, text]) => (
+                  { Icon: IdCard, text: 'Carry a valid photo ID at check-in — your PIN may be required.' },
+                  { Icon: Clock,  text: 'Standard check-in is 2:00 PM. Early check-in subject to availability.' },
+                  { Icon: Phone,  text: 'Need to change your booking? Visit My Stay Booked or contact the property directly.' },
+                  { Icon: Mail,   text: 'A confirmation email with all details has been sent to the guest.' },
+                ].map(({ Icon, text }) => (
                   <li key={text} className="flex items-start gap-3">
-                    <span className="text-base shrink-0">{icon}</span>
+                    <Icon size={18} className="text-primary-600 shrink-0 mt-0.5" />
                     <span>{text}</span>
                   </li>
                 ))}
@@ -283,130 +271,129 @@ export default function TripDetailPage() {
             </div>
           </>
         ) : (
-          /* ── STANDARD VIEW (from trips list) ─────────────────────── */
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 max-w-5xl">
 
-            {/* Left column */}
             <div className="lg:col-span-2 space-y-4">
-
-              {/* Status banner */}
-              <div className={`rounded-xl border ${status.border} ${status.bg} p-5`}>
-                <p className={`text-xs font-semibold uppercase tracking-wider mb-1 ${status.color}`}>
+              <div className={`rounded-3xl border ${tone.container} p-5`}>
+                <p className={`text-xs font-bold uppercase tracking-widest mb-1 ${tone.text}`}>
                   {status.label}
                 </p>
-                <h1 className={`text-xl font-bold ${status.color}`}>{status.headline}</h1>
-                <div className="mt-3 flex gap-4 text-sm">
+                <h1 className={`font-display text-xl font-bold ${tone.text}`}>{status.headline}</h1>
+                <div className="mt-3 flex gap-4 text-sm flex-wrap">
                   {booking.status !== 'CANCELLED' ? (
                     <>
-                      <Link to={`/property/${booking.property.id}`} className="text-[#003580] hover:underline font-medium">
-                        🏨 View property
+                      <Link to={`/property/${booking.property.id}`} className="inline-flex items-center gap-1.5 text-primary-600 hover:underline font-semibold">
+                        <Hotel size={14} /> View property
                       </Link>
-                      <Link to="/" className="text-[#003580] hover:underline font-medium">
-                        🔍 Find another place
+                      <Link to="/" className="inline-flex items-center gap-1.5 text-primary-600 hover:underline font-semibold">
+                        <SearchIcon size={14} /> Find another place
                       </Link>
                     </>
                   ) : (
                     <>
-                      <Link to={`/property/${booking.property.id}`} className="text-[#003580] hover:underline font-medium">
-                        🔄 Book again
+                      <Link to={`/property/${booking.property.id}`} className="inline-flex items-center gap-1.5 text-primary-600 hover:underline font-semibold">
+                        <RefreshCw size={14} /> Book again
                       </Link>
-                      <Link to="/" className="text-[#003580] hover:underline font-medium">
-                        🔍 Find another place
+                      <Link to="/" className="inline-flex items-center gap-1.5 text-primary-600 hover:underline font-semibold">
+                        <SearchIcon size={14} /> Find another place
                       </Link>
                     </>
                   )}
                 </div>
               </div>
 
-              {/* Property details */}
-              <div className="bg-white rounded-xl border border-gray-200 p-6">
-                <h2 className="text-lg font-bold text-gray-900 mb-5">{booking.property.name}</h2>
+              <div className="bento-card p-6">
+                <h2 className="font-display text-lg font-bold text-ink mb-5">{booking.property.name}</h2>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
                   {([
-                    ['📅', 'Check-in',       formatDate(booking.checkin),  'from 14:00'],
-                    ['📅', 'Check-out',      formatDate(booking.checkout), 'until 12:00'],
-                    ['📋', 'Booking details', guestStr,                    `${nights} night${nights !== 1 ? 's' : ''} · ${booking.roomType.name}`],
-                    ['👤', 'Guest name',      booking.guestName,            null],
-                  ] as [string, string, string, string | null][]).map(([icon, label, value, sub]) => (
-                    <div key={label} className="flex gap-3">
-                      <span className="text-xl">{icon}</span>
-                      <div>
-                        <p className="text-xs text-gray-400 mb-0.5">{label}</p>
-                        <p className="font-medium text-gray-900">{value}</p>
-                        {sub && <p className="text-xs text-gray-500">{sub}</p>}
+                    [Calendar,       'Check-in',       formatDate(booking.checkin),  'from 14:00'],
+                    [Calendar,       'Check-out',      formatDate(booking.checkout), 'until 12:00'],
+                    [ClipboardList,  'Booking details', guestStr, `${nights} night${nights !== 1 ? 's' : ''} · ${booking.roomType.name}`],
+                    [Users,          'Guest name',     booking.guestName, null],
+                  ] as [LucideIcon, string, string, string | null][]).map(
+                    ([Icon, label, value, sub]) => (
+                      <div key={label} className="flex gap-3">
+                        <span className="w-9 h-9 rounded-full bg-surface-elev border border-line flex items-center justify-center text-primary-600 shrink-0">
+                          <Icon size={16} />
+                        </span>
+                        <div className="min-w-0">
+                          <p className="text-xs text-muted mb-0.5 uppercase tracking-wider">{label}</p>
+                          <p className="font-semibold text-ink">{value}</p>
+                          {sub && <p className="text-xs text-muted">{sub}</p>}
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    ),
+                  )}
                   <div className="flex gap-3 sm:col-span-2">
-                    <span className="text-xl">📍</span>
+                    <span className="w-9 h-9 rounded-full bg-surface-elev border border-line flex items-center justify-center text-primary-600 shrink-0">
+                      <MapPin size={16} />
+                    </span>
                     <div>
-                      <p className="text-xs text-gray-400 mb-0.5">Location</p>
-                      <p className="font-medium text-gray-900">{booking.property.city}</p>
+                      <p className="text-xs text-muted mb-0.5 uppercase tracking-wider">Location</p>
+                      <p className="font-semibold text-ink">{booking.property.city}</p>
                     </div>
                   </div>
                 </div>
               </div>
 
-              {/* Price card */}
-              <div className="bg-white rounded-xl border border-gray-200 p-6">
-                <h3 className="font-semibold text-gray-900 mb-4">Price summary</h3>
+              <div className="bento-card p-6">
+                <h3 className="font-display font-bold text-ink mb-4">Price summary</h3>
                 <div className="flex justify-between items-center text-sm mb-2">
-                  <span className="text-gray-500">{nights} night{nights !== 1 ? 's' : ''} × room rate</span>
+                  <span className="text-muted">{nights} night{nights !== 1 ? 's' : ''} × room rate</span>
                 </div>
-                <div className="flex justify-between items-center border-t border-gray-100 pt-3 mt-3">
-                  <span className="font-semibold text-gray-900">Total paid</span>
-                  <span className="text-xl font-bold text-[#003580]">
+                <div className="flex justify-between items-center border-t border-line/60 pt-3 mt-3">
+                  <span className="font-semibold text-ink">Total paid</span>
+                  <span className="font-display text-xl font-extrabold gradient-text">
                     {formatPrice(Number(booking.totalPrice))}
                   </span>
                 </div>
-                <p className="text-xs text-gray-400 mt-1">Includes all taxes and fees</p>
+                <p className="text-xs text-muted mt-1">Includes all taxes and fees</p>
               </div>
             </div>
 
-            {/* Right column */}
             <div className="space-y-4">
-              <div className="bg-white rounded-xl border border-gray-200 p-5">
+              <div className="bento-card p-5">
                 <div className="mb-3">
-                  <p className="text-xs text-gray-400 mb-1">Confirmation number</p>
+                  <p className="text-xs text-muted mb-1 uppercase tracking-wider">Confirmation number</p>
                   <div className="flex items-center">
-                    <span className="font-bold text-gray-900 font-mono tracking-wide">{booking.confirmationNumber}</span>
+                    <span className="font-bold text-ink font-mono tracking-wide">{booking.confirmationNumber}</span>
                     <CopyButton value={booking.confirmationNumber} />
                   </div>
                 </div>
                 <div>
-                  <p className="text-xs text-gray-400 mb-1">PIN code</p>
+                  <p className="text-xs text-muted mb-1 uppercase tracking-wider">PIN code</p>
                   <div className="flex items-center">
-                    <span className="font-bold text-gray-900 font-mono tracking-widest text-lg">{booking.pin}</span>
+                    <span className="font-display font-extrabold text-ink font-mono tracking-widest text-lg gradient-text">{booking.pin}</span>
                     <CopyButton value={booking.pin} />
                   </div>
                 </div>
               </div>
 
-              <div className="bg-white rounded-xl border border-gray-200 p-5">
-                <p className="text-xs text-gray-400 mb-1">Booked on</p>
-                <p className="font-medium text-gray-900 text-sm">
+              <div className="bento-card p-5">
+                <p className="text-xs text-muted mb-1 uppercase tracking-wider">Booked on</p>
+                <p className="font-semibold text-ink text-sm">
                   {new Date(booking.createdAt).toLocaleDateString('en-IN', {
                     day: 'numeric', month: 'long', year: 'numeric',
                   })}
                 </p>
               </div>
 
-              <div className="bg-white rounded-xl border border-gray-200 p-5 space-y-2">
+              <div className="bento-card p-5 space-y-2">
                 <button
                   onClick={() => window.print()}
-                  className="block w-full text-center text-sm font-medium text-[#003580] hover:bg-blue-50 border border-[#003580] rounded-lg py-2 transition-colors"
+                  className="block w-full text-center text-sm font-semibold text-primary-600 hover:bg-primary-500/10 border border-primary-500/40 rounded-md py-2 transition-colors inline-flex items-center justify-center gap-2 btn-press"
                 >
-                  🖨 Save as PDF
+                  <Printer size={14} /> Save as PDF
                 </button>
                 <Link
                   to={`/property/${booking.property.id}`}
-                  className="block w-full text-center text-sm font-medium text-gray-600 hover:bg-gray-50 border border-gray-200 rounded-lg py-2 transition-colors"
+                  className="block w-full text-center text-sm font-semibold text-muted hover:text-ink hover:bg-surface-elev border border-line rounded-md py-2 transition-colors inline-flex items-center justify-center gap-2"
                 >
-                  View property
+                  <BedDouble size={14} /> View property
                 </Link>
                 <Link
                   to="/trips"
-                  className="block w-full text-center text-sm font-medium text-gray-600 hover:bg-gray-50 border border-gray-200 rounded-lg py-2 transition-colors"
+                  className="block w-full text-center text-sm font-semibold text-muted hover:text-ink hover:bg-surface-elev border border-line rounded-md py-2 transition-colors"
                 >
                   Back to my bookings
                 </Link>
@@ -415,6 +402,16 @@ export default function TripDetailPage() {
           </div>
         )}
       </PageWrapper>
+    </div>
+  );
+}
+
+function Field({ label, value, sub }: { label: string; value: string; sub?: string }) {
+  return (
+    <div>
+      <p className="text-xs text-muted mb-0.5 uppercase tracking-wider">{label}</p>
+      <p className="font-display font-bold text-ink text-base">{value}</p>
+      {sub && <p className="text-xs text-muted">{sub}</p>}
     </div>
   );
 }

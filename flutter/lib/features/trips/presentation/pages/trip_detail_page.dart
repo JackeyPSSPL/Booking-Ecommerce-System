@@ -56,9 +56,8 @@ class TripDetailPage extends StatelessWidget {
           );
 
           return Scaffold(
-            backgroundColor: AppColors.background,
             appBar: AppBar(
-              backgroundColor: AppColors.primary,
+              backgroundColor: Theme.of(context).colorScheme.primary,
               foregroundColor: Colors.white,
               title: const Text(
                 'Trip Details',

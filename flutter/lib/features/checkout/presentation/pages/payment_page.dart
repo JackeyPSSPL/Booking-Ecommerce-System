@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -122,6 +123,23 @@ class _PaymentPageState extends State<PaymentPage> {
     // Razorpay handles external wallet flow natively — no action needed here.
   }
 
+  /// Dev-only: bypass Razorpay checkout when emulator has no internet.
+  /// Requires DEV_BYPASS_PAYMENT=true in server/.env
+  void _onDevBypass() {
+    widget.cubit.submitBooking(
+      holdId: widget.holdId,
+      ratePlanId: widget.ratePlanId,
+      adults: widget.adults,
+      children: widget.children,
+      guestDetails: widget.guestDetails,
+      payment: {
+        'razorpayOrderId': 'dev_order_bypass',
+        'razorpayPaymentId': 'dev_pay_bypass',
+        'razorpaySignature': 'dev_sig_bypass',
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return BlocProvider<CheckoutCubit>.value(
@@ -149,9 +167,8 @@ class _PaymentPageState extends State<PaymentPage> {
           final isLoading =
               state is PaymentOrderLoading || state is BookingLoading;
           return Scaffold(
-            backgroundColor: AppColors.background,
             appBar: AppBar(
-              backgroundColor: AppColors.primary,
+              backgroundColor: Theme.of(context).colorScheme.primary,
               foregroundColor: Colors.white,
               title: const Text(
                 'Payment',
@@ -172,9 +189,11 @@ class _PaymentPageState extends State<PaymentPage> {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 14, vertical: 12),
                       decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: AppColors.border),
+                        color: Theme.of(context).colorScheme.surface,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.5),
+                        ),
                       ),
                       child: const Row(
                         children: [
@@ -236,6 +255,21 @@ class _PaymentPageState extends State<PaymentPage> {
                         ),
                       ],
                     ),
+                    if (kDebugMode) ...[
+                      const SizedBox(height: 16),
+                      const Divider(),
+                      TextButton.icon(
+                        onPressed: isLoading ? null : _onDevBypass,
+                        icon: const Icon(Icons.developer_mode, size: 14),
+                        label: const Text(
+                          'Dev: Skip Razorpay (emulator bypass)',
+                          style: TextStyle(fontSize: 12),
+                        ),
+                        style: TextButton.styleFrom(
+                          foregroundColor: AppColors.muted,
+                        ),
+                      ),
+                    ],
                     const SizedBox(height: 24),
                   ],
                 ),
@@ -247,15 +281,16 @@ class _PaymentPageState extends State<PaymentPage> {
     );
   }
 
-  // ── Price summary unchanged from original ──────────────────────────────────
+  // ── Price summary ──────────────────────────────────────────────────────────
   Widget _buildPriceSummary() {
     final nights = _nights;
+    final scheme = Theme.of(context).colorScheme;
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.border),
+        color: scheme.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: scheme.outline.withValues(alpha: 0.5)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
