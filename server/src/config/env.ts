@@ -19,6 +19,7 @@ const envSchema = z.object({
   AWS_SECRET_ACCESS_KEY:    z.string().optional(),
   AWS_S3_BUCKET:            z.string().optional(),
   AWS_SQS_QUEUE_URL:        z.string().optional(),
+  GEMINI_API_KEY:           z.string().optional(),
 });
 
 const parsed = envSchema.safeParse(process.env);

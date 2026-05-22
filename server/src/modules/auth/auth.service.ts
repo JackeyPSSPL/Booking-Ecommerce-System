@@ -6,7 +6,7 @@ import { logger } from '../../common/utils/logger';
 import { config } from '../../config/env';
 import { prisma } from '../../config/prisma';
 import { sendOtpEmail } from '../../utils/email.util';
-import { LoginDto, RegisterDto, TokenPairDto, LoginResponseDto } from './auth.schema';
+import { LoginDto, RegisterDto, TokenPairDto, LoginResponseDto, ResendOtpDto } from './auth.schema';
 import { UserResponseDto } from '../users/users.schema';
 
 export class AuthService {
@@ -36,6 +36,31 @@ export class AuthService {
       logger.error('Register failed', { error });
       if (error instanceof AppError) throw error;
       throw new AppError(500, 'REGISTER_FAILED', 'Registration failed');
+    }
+  }
+
+  async resendOtp(dto: ResendOtpDto): Promise<{ devOtp?: string }> {
+    try {
+      const user = await prisma.user.findUnique({ where: { id: dto.userId } });
+      if (!user) throw new AppError(404, 'USER_NOT_FOUND', 'User not found');
+      if (user.emailVerified) throw new ConflictError('Email is already verified', 'ALREADY_VERIFIED');
+
+      await prisma.otpToken.updateMany({ where: { userId: dto.userId, used: false }, data: { used: true } });
+
+      const ROUNDS = config.NODE_ENV === 'production' ? 12 : 10;
+      const code = Math.floor(100000 + Math.random() * 900000).toString();
+      const codeHash = await bcrypt.hash(code, ROUNDS);
+      await prisma.otpToken.create({
+        data: { userId: dto.userId, codeHash, expiresAt: new Date(Date.now() + 10 * 60 * 1000) },
+      });
+
+      await sendOtpEmail({ to: user.email, code });
+      logger.info('OTP resent', { userId: dto.userId });
+      return config.NODE_ENV === 'development' ? { devOtp: code } : {};
+    } catch (error) {
+      logger.error('Resend OTP failed', { error });
+      if (error instanceof AppError) throw error;
+      throw new AppError(500, 'RESEND_OTP_FAILED', 'Failed to resend OTP');
     }
   }
 

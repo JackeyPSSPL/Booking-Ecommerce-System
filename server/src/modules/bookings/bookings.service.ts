@@ -166,6 +166,12 @@ export class BookingsService {
     return { data: bookings, total, page, limit };
   }
 
+  async getBookingById(bookingId: string, userId: string) {
+    const booking = await this.repo.findByIdAndUser(bookingId, userId);
+    if (!booking) throw new NotFoundError('Booking not found');
+    return booking;
+  }
+
   async cancelBooking(bookingId: string, userId: string) {
     try {
       const booking = await this.repo.findByIdAndUser(bookingId, userId);

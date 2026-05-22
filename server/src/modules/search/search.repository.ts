@@ -68,19 +68,21 @@ export class SearchRepository {
           p.amenities,
           p.description,
           p.booking_mode::text AS booking_mode,
-          (
-            SELECT MIN(rt2.base_price)::text
-            FROM room_types rt2
-            WHERE rt2.property_id = p.id
-          ) AS min_price,
-          (
-            SELECT pi.url
-            FROM property_images pi
-            WHERE pi.property_id = p.id
-            ORDER BY pi.sort_order ASC
-            LIMIT 1
-          ) AS cover_image
+          mp.min_price,
+          ci.cover_image
         FROM properties p
+        LEFT JOIN LATERAL (
+          SELECT MIN(rt2.base_price)::text AS min_price
+          FROM room_types rt2
+          WHERE rt2.property_id = p.id
+        ) mp ON true
+        LEFT JOIN LATERAL (
+          SELECT pi.url AS cover_image
+          FROM property_images pi
+          WHERE pi.property_id = p.id
+          ORDER BY pi.sort_order ASC
+          LIMIT 1
+        ) ci ON true
         ${whereClause}
         ORDER BY p.star_rating DESC NULLS LAST, p.name ASC
         LIMIT ${limit} OFFSET ${offset}

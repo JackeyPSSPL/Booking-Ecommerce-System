@@ -34,6 +34,15 @@ export class BookingsController {
     }
   };
 
+  getBookingById = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const booking = await this.service.getBookingById(req.params.id, req.user!.id);
+      ok(res, booking);
+    } catch (error) {
+      next(error);
+    }
+  };
+
   cancelBooking = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const booking = await this.service.cancelBooking(req.params.id, req.user!.id);

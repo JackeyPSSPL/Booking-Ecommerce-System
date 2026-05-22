@@ -54,6 +54,20 @@ export default function OtpPage() {
     },
   });
 
+  const resendMutation = useMutation({
+    mutationFn: () => authApi.resendOtp(userId),
+    onSuccess: () => {
+      reset();
+      submitCalledRef.current = false;
+      setDigits(Array(OTP_LENGTH).fill(''));
+      inputRefs.current[0]?.focus();
+      toast.success('New OTP sent — check server logs in dev mode.');
+    },
+    onError: (err) => {
+      toast.error(getApiError(err));
+    },
+  });
+
   useEffect(() => {
     const code = digits.join('');
     if (code.length === OTP_LENGTH && !submitCalledRef.current && !mutation.isPending) {
@@ -101,11 +115,7 @@ export default function OtpPage() {
   };
 
   const handleResend = () => {
-    reset();
-    submitCalledRef.current = false;
-    setDigits(Array(OTP_LENGTH).fill(''));
-    inputRefs.current[0]?.focus();
-    toast('New OTP sent — check server logs in dev mode.', { icon: '📧' });
+    resendMutation.mutate();
   };
 
   if (!userId) {
@@ -187,16 +197,16 @@ export default function OtpPage() {
         )}
         <button
           type="button"
-          disabled={remaining > 0}
+          disabled={remaining > 0 || resendMutation.isPending}
           onClick={handleResend}
           className={[
             'mt-2 text-sm font-semibold transition-colors',
-            remaining > 0
+            remaining > 0 || resendMutation.isPending
               ? 'text-muted/50 cursor-not-allowed'
               : 'text-primary-600 hover:underline cursor-pointer',
           ].join(' ')}
         >
-          Resend OTP
+          {resendMutation.isPending ? 'Sending…' : 'Resend OTP'}
         </button>
       </div>
     </AuthLayout>

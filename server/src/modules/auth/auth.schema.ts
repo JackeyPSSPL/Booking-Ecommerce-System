@@ -17,9 +17,14 @@ export const refreshTokenSchema = z.object({
   refreshToken: z.string().min(1),
 });
 
+export const resendOtpSchema = z.object({
+  userId: z.string().uuid(),
+});
+
 export type LoginDto = z.infer<typeof loginSchema>;
 export type RegisterDto = z.infer<typeof registerSchema>;
 export type RefreshTokenDto = z.infer<typeof refreshTokenSchema>;
+export type ResendOtpDto = z.infer<typeof resendOtpSchema>;
 
 export interface TokenPairDto {
   accessToken: string;

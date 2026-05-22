@@ -12,6 +12,7 @@ const controller = new BookingsController();
 router.post('/hold', authenticate, authorize(Role.CUSTOMER), validate(createHoldSchema), controller.createHold);
 router.post('/', authenticate, authorize(Role.CUSTOMER), validate(createBookingSchema), controller.createBooking);
 router.get('/', authenticate, authorize(Role.CUSTOMER), controller.getMyBookings);
+router.get('/:id', authenticate, authorize(Role.CUSTOMER), controller.getBookingById);
 router.post('/:id/cancel', authenticate, authorize(Role.CUSTOMER), controller.cancelBooking);
 
 export { router as bookingsRouter };

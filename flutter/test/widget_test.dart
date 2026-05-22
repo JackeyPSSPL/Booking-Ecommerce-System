@@ -1,6 +1,5 @@
-import 'package:flutter_test/flutter_test.dart';
-
-void main() {
-  // Widget tests will be added per feature phase
-  test('placeholder', () => expect(true, isTrue));
-}
+// Main test entry point.
+// Feature-specific tests are organized in subdirectories:
+//   test/features/auth/     — auth BLoC and use case tests
+//   test/features/trips/    — trips BLoC and use case tests
+void main() {}

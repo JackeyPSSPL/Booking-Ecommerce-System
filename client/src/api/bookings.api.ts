@@ -34,6 +34,9 @@ export const bookingsApi = {
   getMyBookings: (params?: { page?: number; limit?: number }) =>
     apiClient.get('/bookings', { params }).then((r) => r.data),
 
+  getById: (bookingId: string) =>
+    apiClient.get(`/bookings/${bookingId}`).then((r) => r.data),
+
   cancel: (bookingId: string) =>
     apiClient.post(`/bookings/${bookingId}/cancel`).then((r) => r.data),
 };

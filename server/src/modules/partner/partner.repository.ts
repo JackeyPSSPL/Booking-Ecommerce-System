@@ -5,11 +5,6 @@ import { ForbiddenError, NotFoundError, ConflictError } from '../../common/error
 const COMMISSION_RATE = 0.12;
 
 export class PartnerRepository {
-  private async propertyIds(ownerId: string): Promise<string[]> {
-    const rows = await prisma.property.findMany({ where: { ownerId }, select: { id: true } });
-    return rows.map(r => r.id);
-  }
-
   async getProperties(ownerId: string) {
     return prisma.property.findMany({
       where: { ownerId },
@@ -23,21 +18,20 @@ export class PartnerRepository {
   }
 
   async getSummary(ownerId: string) {
-    const ids = await this.propertyIds(ownerId);
     const now = new Date();
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
     const next7 = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
 
-    const propFilter = ids.length ? { propertyId: { in: ids } } : { propertyId: 'none' };
+    const ownerFilter = { property: { ownerId } };
 
     const [totalProperties, activeBookings, revenue, upcomingArrivals] = await Promise.all([
       prisma.property.count({ where: { ownerId } }),
-      prisma.booking.count({ where: { ...propFilter, status: 'CONFIRMED', checkout: { gte: now } } }),
+      prisma.booking.count({ where: { ...ownerFilter, status: 'CONFIRMED', checkout: { gte: now } } }),
       prisma.booking.aggregate({
-        where: { ...propFilter, status: { in: ['CONFIRMED', 'COMPLETED'] }, createdAt: { gte: startOfMonth } },
+        where: { ...ownerFilter, status: { in: ['CONFIRMED', 'COMPLETED'] }, createdAt: { gte: startOfMonth } },
         _sum: { totalPrice: true },
       }),
-      prisma.booking.count({ where: { ...propFilter, status: 'CONFIRMED', checkin: { gte: now, lte: next7 } } }),
+      prisma.booking.count({ where: { ...ownerFilter, status: 'CONFIRMED', checkin: { gte: now, lte: next7 } } }),
     ]);
 
     return {
@@ -49,12 +43,10 @@ export class PartnerRepository {
   }
 
   async getUpcomingArrivals(ownerId: string) {
-    const ids = await this.propertyIds(ownerId);
-    if (!ids.length) return [];
     const now = new Date();
     const next7 = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
     return prisma.booking.findMany({
-      where: { propertyId: { in: ids }, status: 'CONFIRMED', checkin: { gte: now, lte: next7 } },
+      where: { property: { ownerId }, status: 'CONFIRMED', checkin: { gte: now, lte: next7 } },
       include: {
         property: { select: { id: true, name: true } },
         roomType: { select: { name: true } },
@@ -64,9 +56,8 @@ export class PartnerRepository {
   }
 
   async getBookings(ownerId: string, status: string | undefined, page: number, limit: number) {
-    const ids = await this.propertyIds(ownerId);
     const where: Prisma.BookingWhereInput = {
-      ...(ids.length ? { propertyId: { in: ids } } : { propertyId: 'none' }),
+      property: { ownerId },
       ...(status && status !== 'ALL' ? { status: status as BookingStatus } : {}),
     };
     const [data, total] = await Promise.all([
@@ -99,25 +90,24 @@ export class PartnerRepository {
   }
 
   async getEarnings(ownerId: string) {
-    const ids = await this.propertyIds(ownerId);
     const now = new Date();
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
     const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
     const endOfLastMonth = new Date(now.getFullYear(), now.getMonth(), 0);
 
-    const propFilter = ids.length ? { propertyId: { in: ids } } : { propertyId: 'none' };
+    const ownerFilter = { property: { ownerId } };
     const paidFilter = { status: { in: ['CONFIRMED', 'COMPLETED'] as BookingStatus[] } };
 
     const [thisMonth, lastMonth, lifetime, bookings] = await Promise.all([
-      prisma.booking.aggregate({ where: { ...propFilter, ...paidFilter, createdAt: { gte: startOfMonth } }, _sum: { totalPrice: true } }),
-      prisma.booking.aggregate({ where: { ...propFilter, ...paidFilter, createdAt: { gte: startOfLastMonth, lte: endOfLastMonth } }, _sum: { totalPrice: true } }),
-      prisma.booking.aggregate({ where: { ...propFilter, ...paidFilter }, _sum: { totalPrice: true } }),
-      ids.length ? prisma.booking.findMany({
-        where: { propertyId: { in: ids }, status: { in: ['CONFIRMED', 'COMPLETED', 'CANCELLED'] } },
+      prisma.booking.aggregate({ where: { ...ownerFilter, ...paidFilter, createdAt: { gte: startOfMonth } }, _sum: { totalPrice: true } }),
+      prisma.booking.aggregate({ where: { ...ownerFilter, ...paidFilter, createdAt: { gte: startOfLastMonth, lte: endOfLastMonth } }, _sum: { totalPrice: true } }),
+      prisma.booking.aggregate({ where: { ...ownerFilter, ...paidFilter }, _sum: { totalPrice: true } }),
+      prisma.booking.findMany({
+        where: { property: { ownerId }, status: { in: ['CONFIRMED', 'COMPLETED', 'CANCELLED'] } },
         include: { property: { select: { name: true } }, roomType: { select: { name: true } } },
         orderBy: { checkout: 'desc' },
         take: 50,
-      }) : [],
+      }),
     ]);
 
     const n = (v: Prisma.Decimal | null | undefined) => Number(v ?? 0);
@@ -166,12 +156,19 @@ export class PartnerRepository {
     const prop = await prisma.property.findFirst({ where: { id: propertyId, ownerId } });
     if (!prop) throw new ForbiddenError('Property not found or access denied');
 
-    for (const d of dates.filter(d => d.isBlocked)) {
-      const existing = await prisma.availability.findFirst({
-        where: { propertyId, roomTypeId: d.roomTypeId, date: new Date(d.date), bookingId: { not: null } },
+    const blockedDates = dates.filter(d => d.isBlocked);
+    if (blockedDates.length) {
+      const conflicts = await prisma.availability.findMany({
+        where: {
+          propertyId,
+          bookingId: { not: null },
+          OR: blockedDates.map(d => ({ roomTypeId: d.roomTypeId, date: new Date(d.date) })),
+        },
+        select: { date: true },
       });
-      if (existing) {
-        throw new ConflictError(`Date ${d.date} has an active booking and cannot be blocked`, 'BOOKING_EXISTS_ON_DATE');
+      if (conflicts.length) {
+        const conflictDate = conflicts[0].date.toISOString().slice(0, 10);
+        throw new ConflictError(`Date ${conflictDate} has an active booking and cannot be blocked`, 'BOOKING_EXISTS_ON_DATE');
       }
     }
 

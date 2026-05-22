@@ -10,14 +10,6 @@ async function bootstrap(): Promise<void> {
 
   startHoldGcJob();
 
-  const patched = await prisma.property.updateMany({
-    where: { AND: [{ lat: null }, { lng: null }] },
-    data: { lat: 23.0503, lng: 72.5311 },
-  });
-  if (patched.count > 0) {
-    logger.info(`Backfilled lat/lng for ${patched.count} propert${patched.count === 1 ? 'y' : 'ies'}`);
-  }
-
   const app = createApp();
 
   app.listen(config.PORT, () => {

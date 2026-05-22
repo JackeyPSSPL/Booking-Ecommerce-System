@@ -240,8 +240,9 @@ class _GuestDetailsPageState extends State<GuestDetailsPage> {
                     keyboardType: TextInputType.emailAddress,
                     validator: (v) {
                       if (v == null || v.isEmpty) return 'Required';
-                      if (!v.contains('@') || !v.contains('.'))
+                      if (!v.contains('@') || !v.contains('.')) {
                         return 'Enter a valid email address';
+                      }
                       return null;
                     }),
                 const SizedBox(height: 12),

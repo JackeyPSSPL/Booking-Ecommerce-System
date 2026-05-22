@@ -150,7 +150,6 @@ model AvailabilityHold {
   roomType   RoomType @relation(fields: [roomTypeId], references: [id], onDelete: Cascade)
   user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@index([expiresAt])
   @@index([expiresAt], map: "idx_holds_expires")
   @@map("availability_holds")
 }
@@ -188,8 +187,6 @@ model Booking {
   user                 User               @relation(fields: [userId], references: [id])
   paymentSimulation    PaymentSimulation?
 
-  @@index([userId, status])
-  @@index([propertyId])
   @@index([propertyId], map: "idx_bookings_property")
   @@index([userId, status], map: "idx_bookings_user")
   @@map("bookings")

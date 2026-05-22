@@ -82,14 +82,14 @@ export default function TripDetailPage() {
   const hasFullData  = !!stateBooking?.property;
 
   const { data: listData, isLoading } = useQuery({
-    queryKey: ['my-bookings-detail', bookingId],
-    queryFn:  () => bookingsApi.getMyBookings({ limit: 50 }),
-    enabled:  !hasFullData,
+    queryKey: ['booking', bookingId],
+    queryFn:  () => bookingsApi.getById(bookingId!),
+    enabled:  !hasFullData && !!bookingId,
   });
 
   const booking: BookingListItem | undefined = hasFullData
     ? stateBooking
-    : listData?.data?.find((b: BookingListItem) => b.id === bookingId);
+    : listData?.data as BookingListItem | undefined;
 
   useEffect(() => {
     if (isNewBooking && booking && !confettiFired.current) {

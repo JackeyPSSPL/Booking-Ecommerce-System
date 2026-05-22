@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { AuthService } from './auth.service';
-import { loginSchema, registerSchema, refreshTokenSchema } from './auth.schema';
+import { loginSchema, registerSchema, refreshTokenSchema, resendOtpSchema } from './auth.schema';
 import { ok, created } from '../../common/utils/response';
 
 export class AuthController {
@@ -41,6 +41,16 @@ export class AuthController {
       const { refreshToken } = refreshTokenSchema.parse(req.body);
       const tokens = await this.authService.refresh(refreshToken);
       ok(res, tokens);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  resendOtp = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const dto = resendOtpSchema.parse(req.body);
+      const result = await this.authService.resendOtp(dto);
+      created(res, result);
     } catch (error) {
       next(error);
     }
