@@ -16,6 +16,12 @@ export const partnerApi = {
   markNoShow: (bookingId: string) =>
     apiClient.patch(`/partner/bookings/${bookingId}/noshow`).then(r => r.data),
 
+  approveBooking: (bookingId: string) =>
+    apiClient.patch(`/partner/bookings/${bookingId}/approve`).then(r => r.data),
+
+  declineBooking: (bookingId: string, reason: string) =>
+    apiClient.patch(`/partner/bookings/${bookingId}/decline`, { reason }).then(r => r.data),
+
   getEarnings: () =>
     apiClient.get('/partner/earnings').then(r => r.data),
 
@@ -24,4 +30,10 @@ export const partnerApi = {
 
   updateAvailability: (propertyId: string, dates: { date: string; roomTypeId: string; isBlocked: boolean }[]) =>
     apiClient.patch(`/partner/properties/${propertyId}/availability`, { dates }).then(r => r.data),
+
+  getLegal: (propertyId: string) =>
+    apiClient.get(`/partner/properties/${propertyId}/legal`).then(r => r.data),
+
+  upsertLegal: (propertyId: string, dto: any) =>
+    apiClient.post(`/partner/properties/${propertyId}/legal`, dto).then(r => r.data),
 };

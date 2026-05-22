@@ -1,6 +1,7 @@
-import { BookingStatus, Prisma } from '@prisma/client';
+import { BookingStatus, Prisma, KycStatus } from '@prisma/client';
 import { prisma } from '../../config/prisma';
 import { ForbiddenError, NotFoundError, ConflictError } from '../../common/errors/app-error';
+import { UpsertLegalDto } from './partner-legal.schema';
 
 const COMMISSION_RATE = 0.12;
 
@@ -181,5 +182,64 @@ export class PartnerRepository {
         }),
       ),
     );
+  }
+
+  async getLegal(propertyId: string) {
+    return prisma.partnerLegal.findUnique({
+      where: { propertyId },
+    });
+  }
+
+  async upsertLegal(propertyId: string, dto: UpsertLegalDto) {
+    return prisma.partnerLegal.upsert({
+      where: { propertyId },
+      create: {
+        propertyId,
+        ...dto,
+        dateOfBirth: new Date(dto.dateOfBirth),
+        kycStatus: KycStatus.KYC_PENDING,
+      },
+      update: {
+        ...dto,
+        dateOfBirth: new Date(dto.dateOfBirth),
+        kycStatus: KycStatus.KYC_PENDING, // Reset to pending on re-submission
+      },
+    });
+  }
+
+  async approveBooking(bookingId: string, ownerId: string) {
+    const booking = await prisma.booking.findFirst({
+      where: { id: bookingId },
+      include: { property: { select: { ownerId: true } } },
+    });
+    if (!booking) throw new NotFoundError('Booking not found');
+    if (booking.property.ownerId !== ownerId) throw new ForbiddenError('Access denied');
+    if (booking.status !== 'PENDING_APPROVAL') {
+      throw new ConflictError('Only pending bookings can be approved', 'INVALID_STATUS');
+    }
+    return prisma.booking.update({
+      where: { id: bookingId },
+      data: { status: 'CONFIRMED' },
+    });
+  }
+
+  async declineBooking(bookingId: string, ownerId: string, reason: string) {
+    const booking = await prisma.booking.findFirst({
+      where: { id: bookingId },
+      include: { property: { select: { ownerId: true } } },
+    });
+    if (!booking) throw new NotFoundError('Booking not found');
+    if (booking.property.ownerId !== ownerId) throw new ForbiddenError('Access denied');
+    if (booking.status !== 'PENDING_APPROVAL') {
+      throw new ConflictError('Only pending bookings can be declined', 'INVALID_STATUS');
+    }
+    return prisma.booking.update({
+      where: { id: bookingId },
+      data: {
+        status: 'CANCELLED',
+        cancellationReason: reason,
+        cancelledAt: new Date(),
+      },
+    });
   }
 }

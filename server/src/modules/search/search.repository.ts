@@ -19,7 +19,7 @@ export interface PropertySearchResult {
 
 export class SearchRepository {
   async search(dto: SearchQueryDto): Promise<{ data: PropertySearchResult[]; total: number }> {
-    const { destination, checkin, checkout, adults, category, page, limit } = dto;
+    const { destination, checkin, checkout, adults, category, minPrice, maxPrice, stars, page, limit } = dto;
     const offset = (page - 1) * limit;
     const destLike = `%${destination}%`;
     const checkinDate = new Date(checkin);
@@ -27,6 +27,21 @@ export class SearchRepository {
 
     const categoryFilter = category
       ? Prisma.sql`AND p.category::text = ${category}`
+      : Prisma.empty;
+
+    const priceFilter = minPrice || maxPrice
+      ? Prisma.sql`
+        AND EXISTS (
+          SELECT 1 FROM room_types rt3
+          WHERE rt3.property_id = p.id
+          AND rt3.base_price >= ${minPrice ?? 0}
+          AND rt3.base_price <= ${maxPrice ?? 999999}
+        )
+      `
+      : Prisma.empty;
+
+    const starsFilter = stars
+      ? Prisma.sql`AND p.star_rating >= ${stars}`
       : Prisma.empty;
 
     const availabilityFilter = Prisma.sql`
@@ -52,6 +67,8 @@ export class SearchRepository {
         OR p.search_vector @@ plainto_tsquery('english', ${destination})
       )
       ${categoryFilter}
+      ${priceFilter}
+      ${starsFilter}
       ${availabilityFilter}
     `;
 

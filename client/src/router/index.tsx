@@ -25,6 +25,9 @@ const AdminDashboard   = lazy(() => import('../features/admin/dashboard/admin-da
 const AdminUsers       = lazy(() => import('../features/admin/users/admin-users-page'));
 const AdminProperties  = lazy(() => import('../features/admin/properties/admin-properties-page'));
 const AdminBookings    = lazy(() => import('../features/admin/bookings/admin-bookings-page'));
+const AdminApprovals   = lazy(() => import('../features/admin/approvals/admin-approvals-page'));
+const AdminKyc         = lazy(() => import('../features/admin/kyc/admin-kyc-page'));
+const AdminAuditLog    = lazy(() => import('../features/admin/audit/admin-audit-log-page'));
 
 function HomeRoute(): React.ReactElement {
   const { user } = useAuthStore();
@@ -125,6 +128,18 @@ const router = createBrowserRouter([
       {
         path: '/admin/bookings',
         element: <ProtectedRoute role="ADMIN"><AdminBookings /></ProtectedRoute>,
+      },
+      {
+        path: '/admin/approvals',
+        element: <ProtectedRoute role="ADMIN"><AdminApprovals /></ProtectedRoute>,
+      },
+      {
+        path: '/admin/kyc',
+        element: <ProtectedRoute role="ADMIN"><AdminKyc /></ProtectedRoute>,
+      },
+      {
+        path: '/admin/audit-log',
+        element: <ProtectedRoute role="ADMIN"><AdminAuditLog /></ProtectedRoute>,
       },
     ],
   },

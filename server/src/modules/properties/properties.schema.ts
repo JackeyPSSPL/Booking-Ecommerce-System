@@ -38,7 +38,14 @@ export const addImagesSchema = z.object({
     .min(1),
 });
 
+export const createRatePlanSchema = z.object({
+  planType: z.enum(['NON_REFUNDABLE', 'WEEKLY']),
+  discountPercent: z.number().min(0).max(100).optional(),
+  minNights: z.number().int().min(1).optional(),
+});
+
 export type CreatePropertyDto    = z.infer<typeof createPropertySchema>;
 export type UpdatePropertyDto    = z.infer<typeof updatePropertySchema>;
 export type AddRoomTypeDto       = z.infer<typeof addRoomTypeSchema>;
 export type AddImagesDto         = z.infer<typeof addImagesSchema>;
+export type CreateRatePlanDto    = z.infer<typeof createRatePlanSchema>;

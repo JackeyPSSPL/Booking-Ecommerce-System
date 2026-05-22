@@ -1,6 +1,7 @@
 import { AppError } from '../../common/errors/app-error';
 import { logger } from '../../common/utils/logger';
 import { PartnerRepository } from './partner.repository';
+import { UpsertLegalDto } from './partner-legal.schema';
 
 const repo = new PartnerRepository();
 
@@ -67,6 +68,37 @@ export class PartnerService {
       invalidateSummary(ownerId);
       logger.info('Availability updated', { propertyId, ownerId, count: dates.length });
     } catch (e) { this.rethrow(e, 'AVAILABILITY_UPDATE_FAILED', 'Failed to update availability', { propertyId, ownerId }); }
+  }
+
+  async getLegal(propertyId: string) {
+    try { return await repo.getLegal(propertyId); }
+    catch (e) { this.rethrow(e, 'GET_LEGAL_FAILED', 'Failed to load KYC', { propertyId }); }
+  }
+
+  async upsertLegal(propertyId: string, dto: UpsertLegalDto) {
+    try {
+      const legal = await repo.upsertLegal(propertyId, dto);
+      logger.info('KYC submitted', { propertyId, entityType: dto.entityType });
+      return legal;
+    } catch (e) { this.rethrow(e, 'UPSERT_LEGAL_FAILED', 'Failed to submit KYC', { propertyId }); }
+  }
+
+  async approveBooking(bookingId: string, ownerId: string) {
+    try {
+      const booking = await repo.approveBooking(bookingId, ownerId);
+      invalidateSummary(ownerId);
+      logger.info('Booking approved', { bookingId, ownerId });
+      return booking;
+    } catch (e) { this.rethrow(e, 'APPROVE_BOOKING_FAILED', 'Failed to approve booking', { bookingId, ownerId }); }
+  }
+
+  async declineBooking(bookingId: string, ownerId: string, reason: string) {
+    try {
+      const booking = await repo.declineBooking(bookingId, ownerId, reason);
+      invalidateSummary(ownerId);
+      logger.info('Booking declined', { bookingId, ownerId, reason });
+      return booking;
+    } catch (e) { this.rethrow(e, 'DECLINE_BOOKING_FAILED', 'Failed to decline booking', { bookingId, ownerId }); }
   }
 
   private rethrow(e: unknown, code: string, message: string, ctx: Record<string, unknown>): never {

@@ -5,9 +5,12 @@ interface Props { children: React.ReactNode; title: string }
 
 const NAV = [
   { to: '/admin/dashboard',  label: 'Dashboard',  icon: '📊' },
+  { to: '/admin/approvals',  label: 'Approvals',  icon: '✓' },
+  { to: '/admin/kyc',        label: 'KYC',        icon: '📄' },
   { to: '/admin/users',      label: 'Users',      icon: '👥' },
   { to: '/admin/properties', label: 'Properties', icon: '🏨' },
   { to: '/admin/bookings',   label: 'Bookings',   icon: '📋' },
+  { to: '/admin/audit-log',  label: 'Audit Log',  icon: '📝' },
 ];
 
 export default function AdminLayout({ children, title }: Props) {

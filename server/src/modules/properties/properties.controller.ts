@@ -14,6 +14,20 @@ export class PropertiesController {
     }
   };
 
+  getAvailability = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const { year, month } = req.query;
+      const availability = await this.service.getAvailability(
+        req.params.id,
+        Number(year) || new Date().getFullYear(),
+        Number(month) || new Date().getMonth() + 1,
+      );
+      ok(res, availability);
+    } catch (error) {
+      next(error);
+    }
+  };
+
   getById = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const property = await this.service.getById(req.params.id);
@@ -63,6 +77,33 @@ export class PropertiesController {
     try {
       const result = await this.service.addImages(req.params.id, req.user!.id, req.body);
       created(res, result);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  getRatePlans = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const plans = await this.service.getRatePlans(req.params.id, req.params.roomTypeId, req.user!.id);
+      ok(res, plans);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  createRatePlan = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const plan = await this.service.createRatePlan(req.params.id, req.params.roomTypeId, req.user!.id, req.body);
+      created(res, plan);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  deleteRatePlan = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      await this.service.deleteRatePlan(req.params.id, req.params.roomTypeId, req.params.ratePlanId, req.user!.id);
+      ok(res, { message: 'Rate plan deleted' });
     } catch (error) {
       next(error);
     }
