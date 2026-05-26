@@ -1,18 +1,19 @@
 import { useEffect, useRef, useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
-import toast from 'react-hot-toast';
 import { Lock, ShieldCheck } from 'lucide-react';
 import { bookingsApi } from '../../api/bookings.api';
 import { paymentsApi } from '../../api/payments.api';
 import { useCheckoutStore } from '../../store/checkout.store';
 import { getApiError, getApiErrorCode } from '../../utils/error';
 import { formatPrice, formatDate, formatNights } from '../../utils/format';
+import { useModal } from '../../hooks/useModal';
 import { RazorpayOrder } from '../../types';
 import Header from '../../components/layout/Header';
 import PageWrapper from '../../components/layout/PageWrapper';
 import Button from '../../components/ui/Button';
 import ErrorBanner from '../../components/ui/ErrorBanner';
+import NotificationModal from '../../components/ui/NotificationModal';
 import CheckoutSteps from './checkout-steps';
 
 interface RazorpayHandlerResponse {
@@ -45,6 +46,7 @@ declare global {
 export default function PaymentPage() {
   const navigate = useNavigate();
   const { roomSelection, guestDetails, clear } = useCheckoutStore();
+  const { modal, show: showModal, close: closeModal } = useModal();
   const bookingSucceeded = useRef(false);
   const rzpScriptLoaded = useRef(false);
 
@@ -80,7 +82,7 @@ export default function PaymentPage() {
 
   const openRazorpayPopup = (orderData: RazorpayOrder) => {
     if (!window.Razorpay) {
-      toast.error('Payment system not loaded. Please refresh and try again.');
+      showModal({ type: 'error', title: 'Payment Error', message: 'Payment system not loaded. Please refresh and try again.' });
       return;
     }
 
@@ -129,9 +131,9 @@ export default function PaymentPage() {
     onError: (err) => {
       const code = getApiErrorCode(err);
       if (code === 'HOLD_EXPIRED' || code === 'NOT_FOUND') {
-        toast.error('Your booking hold has expired. Please search again.', { duration: 6000 });
+        showModal({ type: 'error', title: 'Booking Hold Expired', message: 'Your booking hold has expired. Please search again.' });
         clear();
-        navigate('/');
+        setTimeout(() => navigate('/'), 1500);
         return;
       }
       setPaymentError(getApiError(err));
@@ -170,9 +172,9 @@ export default function PaymentPage() {
       setIsConfirmingBooking(false);
       const code = getApiErrorCode(err);
       if (code === 'HOLD_EXPIRED' || code === 'NOT_FOUND') {
-        toast.error('Your booking hold has expired. Please search again.', { duration: 6000 });
+        showModal({ type: 'error', title: 'Booking Hold Expired', message: 'Your booking hold has expired. Please search again.' });
         clear();
-        navigate('/');
+        setTimeout(() => navigate('/'), 1500);
         return;
       }
       if (code === 'PAYMENT_DECLINED') {
@@ -193,8 +195,10 @@ export default function PaymentPage() {
   };
 
   return (
-    <div className="min-h-screen bg-bg">
-      <Header />
+    <>
+      <NotificationModal modal={modal} onClose={closeModal} />
+      <div className="min-h-screen bg-bg">
+        <Header />
       <PageWrapper>
         <div className="max-w-5xl mx-auto">
           <h1 className="font-display text-3xl font-extrabold text-ink mb-2">Payment</h1>
@@ -294,6 +298,7 @@ export default function PaymentPage() {
           </div>
         </div>
       </PageWrapper>
-    </div>
+      </div>
+    </>
   );
 }

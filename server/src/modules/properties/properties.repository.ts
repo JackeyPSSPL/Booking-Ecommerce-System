@@ -177,4 +177,10 @@ export class PropertiesRepository {
       LIMIT 8
     `);
   }
+
+  async getKycByPropertyId(propertyId: string) {
+    return prisma.partnerLegal.findUnique({
+      where: { propertyId },
+    });
+  }
 }

@@ -100,6 +100,10 @@ export class PropertiesService {
     if (property.status === 'PENDING_REVIEW' || property.status === 'ACTIVE') {
       throw new ConflictError('Property is already submitted for review or published');
     }
+    const kyc = await this.repo.getKycByPropertyId(id);
+    if (!kyc) {
+      throw new BadRequestError('Please submit your KYC information before publishing this property');
+    }
     try {
       const updated = await this.repo.publish(id);
       logger.info('Property submitted for review', { propertyId: id, userId });

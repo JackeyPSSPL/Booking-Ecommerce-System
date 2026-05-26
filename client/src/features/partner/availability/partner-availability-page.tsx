@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import toast from 'react-hot-toast';
 import { BedDouble, ChevronDown } from 'lucide-react';
 import { partnerApi } from '../../../api/partner.api';
 import { getApiError } from '../../../utils/error';
+import { useModal } from '../../../hooks/useModal';
 import Spinner from '../../../components/ui/Spinner';
 import ErrorBanner from '../../../components/ui/ErrorBanner';
+import NotificationModal from '../../../components/ui/NotificationModal';
 import PartnerLayout from '../partner-layout';
 
 const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -29,6 +30,7 @@ function getDatesInMonth(year: number, month: number): Date[] {
 export default function PartnerAvailabilityPage() {
   const { id: propertyId } = useParams<{ id: string }>();
   const qc = useQueryClient();
+  const { modal, show: showModal, close: closeModal } = useModal();
 
   const now = new Date();
   const [year,  setYear]  = useState(now.getFullYear());
@@ -68,27 +70,27 @@ export default function PartnerAvailabilityPage() {
     mutationFn: (dates: { date: string; roomTypeId: string; isBlocked: boolean }[]) =>
       partnerApi.updateAvailability(propertyId!, dates),
     onSuccess: () => {
-      toast.success('Availability saved');
+      showModal({ type: 'success', title: 'Success', message: 'Availability saved' });
       setPending({});
       qc.invalidateQueries({ queryKey: ['partner-availability', propertyId] });
     },
-    onError: (e) => toast.error(getApiError(e)),
+    onError: (e) => showModal({ type: 'error', title: 'Error', message: getApiError(e) }),
   });
 
   const toggleDate = (dateStr: string) => {
     const today = toDateStr(now);
     if (dateStr < today) return;
     const booked = avMap[dateStr]?.bookingId;
-    if (booked) { toast.error('Date has an active booking and cannot be modified'); return; }
+    if (booked) { showModal({ type: 'error', title: 'Cannot Modify', message: 'Date has an active booking and cannot be modified' }); return; }
 
     const current = pending[dateStr] ?? avMap[dateStr]?.isBlocked ?? false;
     setPending(p => ({ ...p, [dateStr]: !current }));
   };
 
   const handleSave = () => {
-    if (!activeRoom) { toast.error('Select a room type first'); return; }
+    if (!activeRoom) { showModal({ type: 'error', title: 'Select Room', message: 'Select a room type first' }); return; }
     const dates = Object.entries(pending).map(([date, isBlocked]) => ({ date, roomTypeId: activeRoom, isBlocked }));
-    if (!dates.length) { toast('No changes to save'); return; }
+    if (!dates.length) { showModal({ type: 'info', title: 'No Changes', message: 'No changes to save' }); return; }
     saveMutation.mutate(dates);
   };
 
@@ -146,7 +148,9 @@ export default function PartnerAvailabilityPage() {
   }
 
   return (
-    <PartnerLayout title="Availability Calendar" backTo="/partner/dashboard" backLabel="Dashboard">
+    <>
+      <NotificationModal modal={modal} onClose={closeModal} />
+      <PartnerLayout title="Availability Calendar" backTo="/partner/dashboard" backLabel="Dashboard">
       {isError && <ErrorBanner message={getApiError(error)} />}
 
       <div className="bento-card p-5 mb-6 flex flex-col lg:flex-row lg:items-end gap-5 lg:gap-8">
@@ -275,6 +279,7 @@ export default function PartnerAvailabilityPage() {
           </div>
         )}
       </div>
-    </PartnerLayout>
+      </PartnerLayout>
+    </>
   );
 }

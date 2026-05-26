@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { propertiesApi } from '../../../api/properties.api';
+import { partnerApi } from '../../../api/partner.api';
 import { getApiError } from '../../../utils/error';
 import PartnerLayout from '../partner-layout';
 
@@ -49,6 +50,7 @@ interface WizardState {
   legalFirstName: string;
   legalLastName: string;
   dob: string;
+  phone: string;
   gstRegistered: boolean;
   gstNumber: string;
   pan: string;
@@ -75,7 +77,7 @@ const INITIAL: WizardState = {
   basePrice: '', nonRefundable: false, weeklyDiscount: false,
   allowLongStays: false, availabilitySync: 'MANUAL',
   entityType: 'INDIVIDUAL', legalFirstName: '', legalLastName: '',
-  dob: '', gstRegistered: false, gstNumber: '', pan: '', aadhaar: '',
+  dob: '', phone: '', gstRegistered: false, gstNumber: '', pan: '', aadhaar: '',
   contractFirstName: '', contractLastName: '', contractPhone: '',
   contractAddress: '', listingAs: 'INDIVIDUAL', certify: false,
 };
@@ -881,15 +883,27 @@ function Step5({ s, set }: { s: WizardState; set: (p: Partial<WizardState>) => v
               <TextInput value={s.legalLastName} onChange={v => set({ legalLastName: v })} placeholder="Legal last name" />
             </FieldRow>
           </div>
-          <FieldRow label="Date of birth">
-            <input
-              type="date"
-              value={s.dob}
-              onChange={e => set({ dob: e.target.value })}
-              max={new Date(Date.now() - 18 * 365.25 * 86400000).toISOString().split('T')[0]}
-              className="w-full rounded-xl border border-line px-4 py-2.5 text-sm text-ink focus:outline-none focus:border-primary-600 transition-colors"
-            />
-          </FieldRow>
+          <div className="grid grid-cols-2 gap-3">
+            <FieldRow label="Date of birth">
+              <input
+                type="date"
+                value={s.dob}
+                onChange={e => set({ dob: e.target.value })}
+                max={new Date(Date.now() - 18 * 365.25 * 86400000).toISOString().split('T')[0]}
+                className="w-full rounded-xl border border-line px-4 py-2.5 text-sm text-ink focus:outline-none focus:border-primary-600 transition-colors"
+              />
+            </FieldRow>
+            <FieldRow label="Phone number *">
+              <TextInput
+                value={s.phone}
+                onChange={v => set({ phone: v.replace(/\D/g, '').slice(0, 10) })}
+                placeholder="10-digit mobile"
+                type="tel"
+                maxLength={10}
+              />
+              <p className="text-xs text-muted/70 mt-1">10-digit mobile number</p>
+            </FieldRow>
+          </div>
         </div>
       </div>
 
@@ -1005,10 +1019,13 @@ function Step6({
         ['Long stays', s.allowLongStays ? 'Allowed' : 'Not allowed'],
         ['Calendar sync', s.availabilitySync],
       ]} />
-      <Section title="Legal" items={[
+      <Section title="Legal / KYC" items={[
         ['Entity', s.entityType],
         ['Owner', `${s.legalFirstName} ${s.legalLastName}`.trim()],
+        ['Date of Birth', s.dob || '—'],
+        ['Phone', s.phone || '—'],
         ['PAN', s.pan || '—'],
+        ['Aadhaar', s.aadhaar || '—'],
         ['GST', s.gstRegistered ? (s.gstNumber || 'Yes') : 'Not registered'],
       ]} />
 
@@ -1205,7 +1222,19 @@ export default function PartnerOnboardingPage() {
         bedConfig:          { beds: state.beds },
       });
 
-      // 4. Publish if not saving as draft
+      // 4. Save KYC information
+      await partnerApi.upsertLegal(pid, {
+        entityType: state.entityType,
+        firstName: state.legalFirstName,
+        lastName: state.legalLastName,
+        dateOfBirth: state.dob,
+        phone: state.phone,
+        pan: state.pan || undefined,
+        aadhaar: state.aadhaar || undefined,
+        gst: state.gstRegistered ? state.gstNumber : undefined,
+      });
+
+      // 5. Publish if not saving as draft
       if (!asDraft) await propertiesApi.publish(pid);
     },
     onSuccess: (_data, asDraft) => {

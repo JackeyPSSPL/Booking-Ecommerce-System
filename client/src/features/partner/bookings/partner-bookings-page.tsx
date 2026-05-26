@@ -1,14 +1,15 @@
 import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
-import toast from 'react-hot-toast';
 import { ClipboardList, X } from 'lucide-react';
 import { partnerApi } from '../../../api/partner.api';
 import { getApiError } from '../../../utils/error';
 import { formatPrice, formatDate } from '../../../utils/format';
+import { useModal } from '../../../hooks/useModal';
 import Spinner from '../../../components/ui/Spinner';
 import ErrorBanner from '../../../components/ui/ErrorBanner';
 import Badge from '../../../components/ui/Badge';
+import NotificationModal from '../../../components/ui/NotificationModal';
 import Modal from '../../../components/ui/Modal';
 import PartnerLayout from '../partner-layout';
 
@@ -35,6 +36,7 @@ export default function PartnerBookingsPage() {
   const [tab, setTab]           = useState<StatusTab>('ALL');
   const [selected, setSelected] = useState<any>(null);
   const qc                      = useQueryClient();
+  const { modal, show: showModal, close: closeModal } = useModal();
 
   const { data, isLoading, isError, error } = useQuery({
     queryKey: ['partner-bookings', tab],
@@ -45,11 +47,11 @@ export default function PartnerBookingsPage() {
   const noShowMutation = useMutation({
     mutationFn: (id: string) => partnerApi.markNoShow(id),
     onSuccess: () => {
-      toast.success('Booking marked as no-show');
+      showModal({ type: 'success', title: 'Success', message: 'Booking marked as no-show' });
       qc.invalidateQueries({ queryKey: ['partner-bookings'] });
       setSelected(null);
     },
-    onError: (e) => toast.error(getApiError(e)),
+    onError: (e) => showModal({ type: 'error', title: 'Error', message: getApiError(e) }),
   });
 
   const bookings: any[] = data?.data?.data ?? [];
@@ -59,7 +61,9 @@ export default function PartnerBookingsPage() {
     b.status === 'CONFIRMED' && new Date(b.checkin) > new Date();
 
   return (
-    <PartnerLayout title="Bookings">
+    <>
+      <NotificationModal modal={modal} onClose={closeModal} />
+      <PartnerLayout title="Bookings">
       {/* Pill tabs */}
       <div className="inline-flex gap-1 mb-6 p-1 bg-surface-elev border border-line rounded-full">
         {TABS.map(t => (
@@ -189,6 +193,7 @@ export default function PartnerBookingsPage() {
           </>
         )}
       </Modal>
-    </PartnerLayout>
+      </PartnerLayout>
+    </>
   );
 }

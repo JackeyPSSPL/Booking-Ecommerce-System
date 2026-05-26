@@ -56,13 +56,13 @@ export default function PropertyCard({ property, checkin, checkout, adults }: Pr
   const hasFreeCancellation = amenities.some(a => a.toLowerCase().includes('cancel'));
 
   return (
-    <motion.div whileHover={{ y: -4 }} transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}>
+    <motion.div whileHover={{ y: -4 }} transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }} className="h-full">
       <Link
         to={`/property/${property.id}?${params.toString()}`}
-        className="group block bento-card overflow-hidden"
+        className="group flex flex-col h-full bento-card overflow-hidden"
       >
         {/* Cover image */}
-        <div className="relative aspect-[4/3] bg-surface-elev overflow-hidden">
+        <div className="relative aspect-[4/3] bg-surface-elev overflow-hidden flex-shrink-0">
           {property.cover_image ? (
             <img
               src={property.cover_image}
@@ -93,28 +93,28 @@ export default function PropertyCard({ property, checkin, checkout, adults }: Pr
         </div>
 
         {/* Content */}
-        <div className="p-4">
+        <div className="p-4 flex flex-col flex-1">
           {/* Star rating */}
           {property.star_rating !== null && (
-            <div className="mb-1.5">
+            <div className="mb-1.5 flex-shrink-0">
               <StarRow rating={Math.round(property.star_rating)} />
             </div>
           )}
 
           {/* Name */}
-          <h3 className="font-display font-bold text-ink text-sm leading-snug line-clamp-2 mb-1">
+          <h3 className="font-display font-bold text-ink text-sm leading-snug line-clamp-2 mb-1 flex-shrink-0">
             {property.name}
           </h3>
 
           {/* City */}
-          <p className="text-xs text-muted mb-2.5 inline-flex items-center gap-1">
+          <p className="text-xs text-muted mb-2.5 inline-flex items-center gap-1 flex-shrink-0">
             <MapPin size={12} />
             {property.city}
           </p>
 
-          {/* Amenity pills */}
+          {/* Amenity pills — constrained height */}
           {visibleAmenities.length > 0 && (
-            <div className="flex flex-wrap gap-1 mb-3">
+            <div className="flex flex-wrap gap-1 mb-3 flex-shrink-0 h-8 overflow-hidden">
               {visibleAmenities.map(amenity => {
                 const key = amenity.toLowerCase();
                 const found = AMENITY_ICONS.find(a => key.includes(a.match));
@@ -136,9 +136,12 @@ export default function PropertyCard({ property, checkin, checkout, adults }: Pr
             </div>
           )}
 
+          {/* Spacer to push price to bottom */}
+          <div className="flex-1" />
+
           {/* Price */}
           {property.min_price && (
-            <div className="flex items-end justify-between border-t border-line/70 pt-3">
+            <div className="flex items-end justify-between border-t border-line/70 pt-3 flex-shrink-0">
               <div>
                 <span className="text-[10px] text-muted block uppercase tracking-wide">from</span>
                 <span className="text-lg font-display font-extrabold gradient-text">

@@ -4,10 +4,11 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useMutation } from '@tanstack/react-query';
 import { Link, useNavigate } from 'react-router-dom';
-import toast from 'react-hot-toast';
 import { Luggage, Building2, type LucideIcon } from 'lucide-react';
 import { authApi } from '../../api/auth.api';
 import { getApiError } from '../../utils/error';
+import { useModal } from '../../hooks/useModal';
+import NotificationModal from '../../components/ui/NotificationModal';
 import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
 import ErrorBanner from '../../components/ui/ErrorBanner';
@@ -40,6 +41,7 @@ const ACCOUNT_TYPES: {
 export default function RegisterPage() {
   const navigate = useNavigate();
   const [role, setRole] = useState<AccountType>('CUSTOMER');
+  const { modal, show: showModal, close: closeModal } = useModal();
 
   const { register, handleSubmit, formState: { errors } } = useForm<FormData>({
     resolver: zodResolver(schema),
@@ -48,16 +50,19 @@ export default function RegisterPage() {
   const mutation = useMutation({
     mutationFn: (data: FormData) => authApi.register({ ...data, role }),
     onSuccess: (res) => {
-      toast.success('Account created! Check your email for the verification code.');
-      navigate(`/verify-otp?userId=${res.data.userId}`, { state: { devOtp: res.data.devOtp } });
+      showModal({ type: 'success', title: 'Account Created', message: 'Check your email for the verification code.' });
+      setTimeout(() => navigate(`/verify-otp?userId=${res.data.userId}`, { state: { devOtp: res.data.devOtp } }), 2000);
     },
+    onError: (err) => showModal({ type: 'error', title: 'Registration Failed', message: getApiError(err) }),
   });
 
   return (
-    <AuthLayout
-      title="Create your account"
-      subtitle="Join millions of travellers on StayBook"
-      footer={
+    <>
+      <NotificationModal modal={modal} onClose={closeModal} />
+      <AuthLayout
+        title="Create your account"
+        subtitle="Join millions of travellers on StayBook"
+        footer={
         <>
           Already have an account?{' '}
           <Link to="/login" className="text-primary-600 hover:underline font-semibold">
@@ -116,5 +121,6 @@ export default function RegisterPage() {
         </Button>
       </form>
     </AuthLayout>
+    </>
   );
 }

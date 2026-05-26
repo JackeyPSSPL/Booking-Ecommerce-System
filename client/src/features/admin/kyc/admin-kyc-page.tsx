@@ -2,17 +2,19 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { adminApi } from '../../../api/admin.api';
 import { getApiError } from '../../../utils/error';
+import { useModal } from '../../../hooks/useModal';
+import NotificationModal from '../../../components/ui/NotificationModal';
 import Spinner from '../../../components/ui/Spinner';
 import ErrorBanner from '../../../components/ui/ErrorBanner';
 import Button from '../../../components/ui/Button';
 import AdminLayout from '../admin-layout';
-import toast from 'react-hot-toast';
 
 const TABS = ['KYC_PENDING', 'KYC_APPROVED', 'KYC_REJECTED'] as const;
 
 export default function AdminKycPage() {
   const [tab, setTab] = useState<typeof TABS[number]>('KYC_PENDING');
   const [search, setSearch] = useState('');
+  const { modal, show: showModal, close: closeModal } = useModal();
   const queryClient = useQueryClient();
 
   const kycQ = useQuery({
@@ -24,22 +26,22 @@ export default function AdminKycPage() {
   const approveMut = useMutation({
     mutationFn: (kycId: string) => adminApi.approveKyc(kycId),
     onSuccess: () => {
+      showModal({ type: 'success', title: 'Success', message: 'KYC approved successfully!' });
       queryClient.invalidateQueries({ queryKey: ['admin-kyc'] });
       queryClient.invalidateQueries({ queryKey: ['admin-stats'] });
-      toast.success('KYC approved');
     },
-    onError: (error) => toast.error(getApiError(error)),
+    onError: (error) => showModal({ type: 'error', title: 'Error', message: getApiError(error) }),
   });
 
   const rejectMut = useMutation({
     mutationFn: ({ kycId, reason }: { kycId: string; reason: string }) =>
       adminApi.rejectKyc(kycId, reason),
     onSuccess: () => {
+      showModal({ type: 'success', title: 'Success', message: 'KYC rejected successfully!' });
       queryClient.invalidateQueries({ queryKey: ['admin-kyc'] });
       queryClient.invalidateQueries({ queryKey: ['admin-stats'] });
-      toast.success('KYC rejected');
     },
-    onError: (error) => toast.error(getApiError(error)),
+    onError: (error) => showModal({ type: 'error', title: 'Error', message: getApiError(error) }),
   });
 
   const kycs = kycQ.data?.data?.data ?? [];
@@ -144,6 +146,9 @@ export default function AdminKycPage() {
           </table>
         </div>
       )}
+
+      {/* Notification Modal */}
+      <NotificationModal modal={modal} onClose={closeModal} />
     </AdminLayout>
   );
 }

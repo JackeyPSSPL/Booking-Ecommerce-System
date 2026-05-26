@@ -13,6 +13,8 @@ export class AdminRepository {
       activeProperties,
       totalBookings,
       confirmedBookings,
+      pendingPropertyCount,
+      pendingKycCount,
       revenueThisMonth,
       revenueLifetime,
       recentBookings,
@@ -22,6 +24,8 @@ export class AdminRepository {
       prisma.property.count({ where: { status: PropertyStatus.ACTIVE } }),
       prisma.booking.count(),
       prisma.booking.count({ where: { status: BookingStatus.CONFIRMED } }),
+      prisma.property.count({ where: { status: PropertyStatus.PENDING_REVIEW } }),
+      prisma.partnerLegal.count({ where: { kycStatus: KycStatus.KYC_PENDING } }),
       prisma.booking.aggregate({
         where: {
           status: { in: [BookingStatus.CONFIRMED, BookingStatus.COMPLETED] },
@@ -49,6 +53,8 @@ export class AdminRepository {
       activeProperties,
       totalBookings,
       confirmedBookings,
+      pendingPropertyCount,
+      pendingKycCount,
       revenueThisMonth: Number(revenueThisMonth._sum.totalPrice ?? 0),
       revenueLifetime: Number(revenueLifetime._sum.totalPrice ?? 0),
       recentBookings,
@@ -298,6 +304,10 @@ export class AdminRepository {
         },
       },
     });
+  }
+
+  async getKycByPropertyId(propertyId: string) {
+    return prisma.partnerLegal.findUnique({ where: { propertyId } });
   }
 
   async approveKyc(kycId: string, adminId: string, note?: string) {

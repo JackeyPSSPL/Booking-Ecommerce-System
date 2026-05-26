@@ -2,14 +2,16 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { adminApi } from '../../../api/admin.api';
 import { getApiError } from '../../../utils/error';
+import { useModal } from '../../../hooks/useModal';
+import NotificationModal from '../../../components/ui/NotificationModal';
 import Spinner from '../../../components/ui/Spinner';
 import ErrorBanner from '../../../components/ui/ErrorBanner';
 import Button from '../../../components/ui/Button';
 import AdminLayout from '../admin-layout';
-import toast from 'react-hot-toast';
 
 export default function AdminApprovalsPage() {
   const [search, setSearch] = useState('');
+  const { modal, show: showModal, close: closeModal } = useModal();
   const queryClient = useQueryClient();
 
   const approvalQ = useQuery({
@@ -21,22 +23,22 @@ export default function AdminApprovalsPage() {
   const approveMut = useMutation({
     mutationFn: (propertyId: string) => adminApi.approveProperty(propertyId),
     onSuccess: () => {
+      showModal({ type: 'success', title: 'Success', message: 'Property approved successfully!' });
       queryClient.invalidateQueries({ queryKey: ['admin-pending-properties'] });
       queryClient.invalidateQueries({ queryKey: ['admin-stats'] });
-      toast.success('Property approved');
     },
-    onError: (error) => toast.error(getApiError(error)),
+    onError: (error) => showModal({ type: 'error', title: 'Error', message: getApiError(error) }),
   });
 
   const rejectMut = useMutation({
     mutationFn: ({ propertyId, reason }: { propertyId: string; reason: string }) =>
       adminApi.rejectProperty(propertyId, reason),
     onSuccess: () => {
+      showModal({ type: 'success', title: 'Success', message: 'Property rejected successfully!' });
       queryClient.invalidateQueries({ queryKey: ['admin-pending-properties'] });
       queryClient.invalidateQueries({ queryKey: ['admin-stats'] });
-      toast.success('Property rejected');
     },
-    onError: (error) => toast.error(getApiError(error)),
+    onError: (error) => showModal({ type: 'error', title: 'Error', message: getApiError(error) }),
   });
 
   const properties = approvalQ.data?.data?.data ?? [];
@@ -114,6 +116,9 @@ export default function AdminApprovalsPage() {
           ))}
         </div>
       )}
+
+      {/* Notification Modal */}
+      <NotificationModal modal={modal} onClose={closeModal} />
     </AdminLayout>
   );
 }

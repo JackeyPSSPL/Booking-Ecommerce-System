@@ -90,6 +90,10 @@ const router = createBrowserRouter([
         element: <ProtectedRoute><TripDetailPage /></ProtectedRoute>,
       },
       {
+        path: '/partner',
+        element: <Navigate to="/partner/dashboard" replace />,
+      },
+      {
         path: '/partner/dashboard',
         element: <ProtectedRoute role="PARTNER"><PartnerDashboard /></ProtectedRoute>,
       },
@@ -112,6 +116,10 @@ const router = createBrowserRouter([
       {
         path: '/partner/earnings',
         element: <ProtectedRoute role="PARTNER"><PartnerEarnings /></ProtectedRoute>,
+      },
+      {
+        path: '/admin',
+        element: <Navigate to="/admin/dashboard" replace />,
       },
       {
         path: '/admin/dashboard',

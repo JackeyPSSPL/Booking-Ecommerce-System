@@ -2,9 +2,9 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { motion } from 'framer-motion';
-import toast from 'react-hot-toast';
 import { Search as SearchIcon } from 'lucide-react';
 import { bookingsApi } from '../../api/bookings.api';
+import { useModal } from '../../hooks/useModal';
 import { BookingListItem } from '../../types';
 import { formatDate, formatPrice } from '../../utils/format';
 import { getApiError } from '../../utils/error';
@@ -14,6 +14,7 @@ import Button from '../../components/ui/Button';
 import Spinner from '../../components/ui/Spinner';
 import ErrorBanner from '../../components/ui/ErrorBanner';
 import Badge from '../../components/ui/Badge';
+import NotificationModal from '../../components/ui/NotificationModal';
 
 type Tab = 'past' | 'cancelled';
 
@@ -32,6 +33,7 @@ export default function TripsPage() {
   const [activeTab, setActiveTab]     = useState<Tab>('past');
   const [confirmingId, setConfirmingId] = useState<string | null>(null);
   const queryClient = useQueryClient();
+  const { modal, show: showModal, close: closeModal } = useModal();
 
   const { data, isLoading, isError, error } = useQuery({
     queryKey: ['my-bookings'],
@@ -41,14 +43,14 @@ export default function TripsPage() {
   const cancelMutation = useMutation({
     mutationFn: (bookingId: string) => bookingsApi.cancel(bookingId),
     onSuccess: () => {
-      toast.success('Booking cancelled');
+      showModal({ type: 'success', title: 'Success', message: 'Booking cancelled' });
       setConfirmingId(null);
       queryClient.invalidateQueries({ queryKey: ['my-bookings'] });
       setActiveTab('cancelled');
     },
     onError: (err) => {
       setConfirmingId(null);
-      toast.error(getApiError(err));
+      showModal({ type: 'error', title: 'Error', message: getApiError(err) });
     },
   });
 
@@ -61,8 +63,10 @@ export default function TripsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-bg">
-      <Header />
+    <>
+      <NotificationModal modal={modal} onClose={closeModal} />
+      <div className="min-h-screen bg-bg">
+        <Header />
       <PageWrapper>
         <h1 className="font-display text-3xl font-extrabold text-ink mb-2">My Stay Booked</h1>
         <p className="text-sm text-muted mb-6">Manage your past and cancelled stays.</p>
@@ -137,7 +141,8 @@ export default function TripsPage() {
           </div>
         )}
       </PageWrapper>
-    </div>
+      </div>
+    </>
   );
 }
 

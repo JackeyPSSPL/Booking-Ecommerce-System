@@ -1,6 +1,5 @@
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
-import toast from 'react-hot-toast';
 import { motion } from 'framer-motion';
 import {
   MapPin, Star, Users, Utensils, CheckCircle2, XCircle, Calendar, Moon,
@@ -10,6 +9,7 @@ import { propertiesApi } from '../../api/properties.api';
 import { bookingsApi } from '../../api/bookings.api';
 import { useCheckoutStore } from '../../store/checkout.store';
 import { useAuthStore } from '../../store/auth.store';
+import { useModal } from '../../hooks/useModal';
 import { Property, RoomType } from '../../types';
 import { formatPrice, formatNights } from '../../utils/format';
 import { getApiError } from '../../utils/error';
@@ -19,6 +19,7 @@ import PageWrapper from '../../components/layout/PageWrapper';
 import Button from '../../components/ui/Button';
 import Spinner from '../../components/ui/Spinner';
 import ErrorBanner from '../../components/ui/ErrorBanner';
+import NotificationModal from '../../components/ui/NotificationModal';
 
 export default function PropertyDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -26,6 +27,7 @@ export default function PropertyDetailPage() {
   const navigate = useNavigate();
   const { accessToken } = useAuthStore();
   const { setRoomSelection, setHoldId } = useCheckoutStore();
+  const { modal, show: showModal, close: closeModal } = useModal();
 
   const checkin = searchParams.get('checkin') ?? '';
   const checkout = searchParams.get('checkout') ?? '';
@@ -64,17 +66,17 @@ export default function PropertyDetailPage() {
       setHoldId(res.data.id);
       navigate('/checkout/details');
     },
-    onError: (err) => toast.error(getApiError(err)),
+    onError: (err) => showModal({ type: 'error', title: 'Error', message: getApiError(err) }),
   });
 
   const handleReserve = (roomTypeId: string) => {
     if (!accessToken) {
-      toast.error('Please sign in to make a reservation');
-      navigate('/login');
+      showModal({ type: 'error', title: 'Sign In Required', message: 'Please sign in to make a reservation' });
+      setTimeout(() => navigate('/login'), 1500);
       return;
     }
     if (!checkin || !checkout) {
-      toast.error('No dates selected — go back to search and pick your dates');
+      showModal({ type: 'error', title: 'No Dates Selected', message: 'Go back to search and pick your dates' });
       return;
     }
     holdMutation.mutate(roomTypeId);
@@ -103,8 +105,10 @@ export default function PropertyDetailPage() {
   const amenities = property.amenities as string[];
 
   return (
-    <div className="min-h-screen bg-bg">
-      <Header />
+    <>
+      <NotificationModal modal={modal} onClose={closeModal} />
+      <div className="min-h-screen bg-bg">
+        <Header />
       <PageWrapper>
         {/* Cover */}
         <motion.div
@@ -219,7 +223,8 @@ export default function PropertyDetailPage() {
         </div>
       </PageWrapper>
       <Footer />
-    </div>
+      </div>
+    </>
   );
 }
 

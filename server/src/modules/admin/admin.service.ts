@@ -46,6 +46,10 @@ export class AdminService {
       if (property.status !== PropertyStatus.PENDING_REVIEW) {
         throw new BadRequestError('Property is not pending review');
       }
+      const kyc = await repo.getKycByPropertyId(propertyId);
+      if (!kyc || kyc.kycStatus !== 'KYC_APPROVED') {
+        throw new BadRequestError('Partner KYC must be approved before property can be activated');
+      }
       const approved = await repo.approveProperty(propertyId, actorId, note);
       await repo.createAuditLog(actorId, 'APPROVE_PROPERTY', 'PROPERTY', propertyId, note);
       logger.info('Property approved', { propertyId, adminId: actorId });
@@ -149,6 +153,11 @@ export class AdminService {
       if (kyc.kycStatus !== 'KYC_PENDING') throw new BadRequestError('KYC is not pending');
       const rejected = await repo.rejectKyc(kycId, actorId, reason);
       await repo.createAuditLog(actorId, 'REJECT_KYC', 'KYC', kycId, reason);
+      if (kyc.property.status === PropertyStatus.ACTIVE) {
+        await repo.updatePropertyStatus(kyc.propertyId, PropertyStatus.PAUSED);
+        await repo.createAuditLog(actorId, 'PAUSE_PROPERTY', 'PROPERTY', kyc.propertyId, `Auto-paused due to KYC rejection: ${reason}`);
+        logger.warn('Property auto-paused due to KYC rejection', { propertyId: kyc.propertyId, kycId, reason });
+      }
       logger.info('KYC rejected', { kycId, adminId: actorId, reason });
       return rejected;
     } catch (e) { this.rethrow(e, 'REJECT_KYC_FAILED', 'Failed to reject KYC'); }

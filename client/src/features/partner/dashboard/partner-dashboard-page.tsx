@@ -1,7 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import toast from 'react-hot-toast';
 import {
   Hotel, Building2, AlertTriangle, Plus, Edit3, Eye, Calendar, ArrowRight,
   MapPin, BedDouble, ClipboardList, Globe, type LucideIcon,
@@ -10,8 +9,10 @@ import { partnerApi } from '../../../api/partner.api';
 import { propertiesApi } from '../../../api/properties.api';
 import { getApiError } from '../../../utils/error';
 import { formatPrice } from '../../../utils/format';
+import { useModal } from '../../../hooks/useModal';
 import Spinner from '../../../components/ui/Spinner';
 import ErrorBanner from '../../../components/ui/ErrorBanner';
+import NotificationModal from '../../../components/ui/NotificationModal';
 import PartnerLayout from '../partner-layout';
 
 function StatCard({
@@ -63,21 +64,24 @@ export default function PartnerDashboardPage() {
   const properties = propertiesQ.data?.data ?? [];
 
   const qc = useQueryClient();
+  const { modal, show: showModal, close: closeModal } = useModal();
   const publishMutation = useMutation({
     mutationFn: (id: string) => propertiesApi.publish(id),
     onSuccess: () => {
-      toast.success('Property is now live!');
+      showModal({ type: 'success', title: 'Success', message: 'Property is now live!' });
       qc.invalidateQueries({ queryKey: ['partner-properties'] });
       qc.invalidateQueries({ queryKey: ['partner-summary'] });
     },
-    onError: (e) => toast.error(getApiError(e)),
+    onError: (e) => showModal({ type: 'error', title: 'Error', message: getApiError(e) }),
   });
 
   const totalRooms = properties.reduce((s: number, p: any) => s + (p.roomTypes?.length ?? 0), 0);
   const totalBookings = properties.reduce((s: number, p: any) => s + (p._count?.bookings ?? 0), 0);
 
   return (
-    <PartnerLayout title="Dashboard">
+    <>
+      <NotificationModal modal={modal} onClose={closeModal} />
+      <PartnerLayout title="Dashboard">
       {summaryQ.isError && <ErrorBanner message={getApiError(summaryQ.error)} />}
 
       {/* Customer visibility hint */}
@@ -293,6 +297,7 @@ export default function PartnerDashboardPage() {
           </div>
         )}
       </div>
-    </PartnerLayout>
+      </PartnerLayout>
+    </>
   );
 }

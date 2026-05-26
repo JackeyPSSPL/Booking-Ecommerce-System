@@ -1,6 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import toast from 'react-hot-toast';
 import {
   BedDouble, Plane, Hotel, Car, Ticket,
   HelpCircle, ChevronDown, LogOut, Briefcase, ShieldCheck, BookMarked,
@@ -38,7 +37,6 @@ export default function Header() {
     try { await authApi.logout(); } catch { /* ignore */ }
     clear();
     navigate('/login');
-    toast.success('Signed out');
   };
 
   const isPartner = user?.role === 'PARTNER';
