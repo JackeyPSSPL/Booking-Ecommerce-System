@@ -1,0 +1,112 @@
+############################
+# 🔐 ENV & SECRETS
+############################
+.env
+.env.*
+*.env
+*.local
+*.secret
+*.key
+*.pem
+*.crt
+
+############################
+# 🧠 NODE / REACT
+############################
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Build output
+build/
+dist/
+.next/
+out/
+
+# Logs
+logs/
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+############################
+# ⚛️ REACT SPECIFIC
+############################
+coverage/
+*.tsbuildinfo
+
+############################
+# 🟢 NODE BACKEND
+############################
+uploads/
+tmp/
+temp/
+
+############################
+# 🐘 POSTGRESQL (LOCAL DEV)
+############################
+# Local DB files (if any)
+*.sql
+*.dump
+*.backup
+
+# Docker volumes (if used)
+pgdata/
+postgres-data/
+
+############################
+# 📱 FLUTTER
+############################
+# Flutter/Dart/Pub
+.dart_tool/
+.packages
+.pub-cache/
+.pub/
+build/
+
+# Flutter specific
+.flutter-plugins
+.flutter-plugins-dependencies
+.metadata
+
+# Android
+android/.gradle/
+android/app/build/
+
+# iOS
+ios/Pods/
+ios/.symlinks/
+ios/Flutter/Flutter.framework
+ios/Flutter/Flutter.podspec
+
+# MacOS
+macos/Pods/
+
+############################
+# 🔑 API KEYS / CONFIG
+############################
+google-services.json
+GoogleService-Info.plist
+firebase_options.dart
+
+############################
+# 🧪 TEST / COVERAGE
+############################
+coverage/
+lcov.info
+
+############################
+# 📦 MISC
+############################
+*.lock
+*.swp
+*.swo
+*.tmp
