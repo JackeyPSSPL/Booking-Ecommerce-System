@@ -72,6 +72,19 @@ export default function AdminDashboardPage() {
               value={formatPrice(stats?.revenueLifetime ?? 0)}
               sub={`${formatPrice(stats?.revenueThisMonth ?? 0)} this month`}
               color="text-orange-500"
+              href="/admin/bookings"
+            />
+            <StatCard
+              label="Pending Approvals"
+              value={stats?.pendingPropertyCount ?? 0}
+              color="text-amber-600"
+              href="/admin/approvals"
+            />
+            <StatCard
+              label="KYC Queue"
+              value={stats?.pendingKycCount ?? 0}
+              color="text-purple-600"
+              href="/admin/kyc"
             />
           </>
         )}
@@ -131,11 +144,14 @@ export default function AdminDashboardPage() {
       </div>
 
       {/* Quick nav */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-6">
         {[
-          { to: '/admin/users',      label: 'Manage Users',      desc: 'View and filter all registered users', icon: '👥' },
-          { to: '/admin/properties', label: 'Manage Properties', desc: 'Review listings and update status',    icon: '🏨' },
-          { to: '/admin/bookings',   label: 'Manage Bookings',   desc: 'View all bookings platform-wide',     icon: '📋' },
+          { to: '/admin/approvals',  label: 'Property Approvals', desc: 'Review pending property submissions', icon: '✓' },
+          { to: '/admin/kyc',        label: 'KYC Review',         desc: 'Manage partner legal documents',     icon: '📄' },
+          { to: '/admin/users',      label: 'Manage Users',       desc: 'View and filter all registered users', icon: '👥' },
+          { to: '/admin/properties', label: 'Manage Properties',  desc: 'Review listings and update status',  icon: '🏨' },
+          { to: '/admin/bookings',   label: 'Manage Bookings',    desc: 'View all bookings platform-wide',   icon: '📋' },
+          { to: '/admin/audit-log',  label: 'Audit Log',          desc: 'View all admin actions',            icon: '📊' },
         ].map(item => (
           <Link
             key={item.to}

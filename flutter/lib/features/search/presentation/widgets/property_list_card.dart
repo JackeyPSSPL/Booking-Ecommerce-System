@@ -1,6 +1,8 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import '../../../../core/network/app_image_cache_manager.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/utils/image_utils.dart';
 import '../../../../core/utils/currency_utils.dart';
 import '../../domain/entities/search_result_entity.dart';
 
@@ -16,18 +18,20 @@ class PropertyListCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
     return GestureDetector(
       onTap: onTap,
       child: Container(
         margin: const EdgeInsets.only(bottom: 16),
         decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
+          color: scheme.surface,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: scheme.outline.withValues(alpha: 0.5)),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withValues(alpha: 0.08),
-              blurRadius: 12,
-              offset: const Offset(0, 3),
+              blurRadius: 18,
+              offset: const Offset(0, 8),
             ),
           ],
         ),
@@ -43,15 +47,32 @@ class PropertyListCard extends StatelessWidget {
   }
 
   Widget _buildImage() {
+    final hasImage = property.coverImage != null && property.coverImage!.isNotEmpty;
+
     return ClipRRect(
-      borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
-      child: property.coverImage != null
+      borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+      child: hasImage
           ? CachedNetworkImage(
-              imageUrl: property.coverImage!,
+              imageUrl: proxyImageUrl(property.coverImage),
+              cacheManager: AppImageCacheManager(),
               height: 180,
               width: double.infinity,
               fit: BoxFit.cover,
-              placeholder: (_, __) => _imagePlaceholder(),
+              httpHeaders: const {'Connection': 'keep-alive'},
+              maxHeightDiskCache: 500,
+              maxWidthDiskCache: 500,
+              placeholder: (context, url) => Container(
+                height: 180,
+                width: double.infinity,
+                color: const Color(0xFFE8EDF5),
+                child: const Center(
+                  child: SizedBox(
+                    width: 24,
+                    height: 24,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
+                ),
+              ),
               errorWidget: (_, __, ___) => _imagePlaceholder(),
             )
           : _imagePlaceholder(),

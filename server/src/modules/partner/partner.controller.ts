@@ -51,4 +51,30 @@ export class PartnerController {
       ok(res, null, 'Availability updated');
     } catch (e) { next(e); }
   };
+
+  getLegal = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      ok(res, await service.getLegal(req.params.propertyId));
+    } catch (e) { next(e); }
+  };
+
+  upsertLegal = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const legal = await service.upsertLegal(req.params.propertyId, req.body);
+      ok(res, legal, 'KYC submitted for review');
+    } catch (e) { next(e); }
+  };
+
+  approveBooking = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      ok(res, await service.approveBooking(req.params.id, req.user!.id), 'Booking approved');
+    } catch (e) { next(e); }
+  };
+
+  declineBooking = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const { reason } = req.body as { reason: string };
+      ok(res, await service.declineBooking(req.params.id, req.user!.id, reason), 'Booking declined');
+    } catch (e) { next(e); }
+  };
 }

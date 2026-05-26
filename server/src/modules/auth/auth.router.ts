@@ -11,6 +11,7 @@ const authLimiter = rateLimit({ windowMs: 60_000, max: config.NODE_ENV === 'deve
 
 router.post('/register', authLimiter, controller.register);
 router.post('/verify-otp', authLimiter, controller.verifyOtp);
+router.post('/resend-otp', authLimiter, controller.resendOtp);
 router.post('/login', authLimiter, controller.login);
 router.post('/refresh', controller.refresh);
 router.post('/logout', authenticate, controller.logout);

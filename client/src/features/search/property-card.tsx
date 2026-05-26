@@ -1,4 +1,10 @@
 import { Link } from 'react-router-dom';
+import { motion } from 'framer-motion';
+import {
+  MapPin, Wifi, Waves, ParkingSquare, Dumbbell, Utensils,
+  Sparkles, Snowflake, Coffee, Wine, PawPrint, CheckCircle2, ArrowRight,
+  type LucideIcon,
+} from 'lucide-react';
 import { SearchResult } from '../../types';
 import { formatPrice } from '../../utils/format';
 
@@ -9,18 +15,18 @@ interface PropertyCardProps {
   adults: number;
 }
 
-const AMENITY_ICONS: Record<string, string> = {
-  wifi: '📶',
-  pool: '🏊',
-  parking: '🅿️',
-  gym: '🏋',
-  restaurant: '🍽',
-  spa: '💆',
-  ac: '❄️',
-  breakfast: '🍳',
-  bar: '🍸',
-  pets: '🐾',
-};
+const AMENITY_ICONS: { match: string; Icon: LucideIcon }[] = [
+  { match: 'wifi',       Icon: Wifi },
+  { match: 'pool',       Icon: Waves },
+  { match: 'parking',    Icon: ParkingSquare },
+  { match: 'gym',        Icon: Dumbbell },
+  { match: 'restaurant', Icon: Utensils },
+  { match: 'spa',        Icon: Sparkles },
+  { match: 'ac',         Icon: Snowflake },
+  { match: 'breakfast',  Icon: Coffee },
+  { match: 'bar',        Icon: Wine },
+  { match: 'pet',        Icon: PawPrint },
+];
 
 function StarRow({ rating }: { rating: number }) {
   return (
@@ -28,7 +34,7 @@ function StarRow({ rating }: { rating: number }) {
       {Array.from({ length: 5 }, (_, i) => (
         <svg
           key={i}
-          className={`w-3 h-3 ${i < rating ? 'text-[#FDC702]' : 'text-gray-300'}`}
+          className={`w-3 h-3 ${i < rating ? 'text-star drop-shadow-[0_1px_3px_hsl(var(--color-star)/0.45)]' : 'text-line'}`}
           fill="currentColor"
           viewBox="0 0 20 20"
         >
@@ -50,99 +56,106 @@ export default function PropertyCard({ property, checkin, checkout, adults }: Pr
   const hasFreeCancellation = amenities.some(a => a.toLowerCase().includes('cancel'));
 
   return (
-    <Link
-      to={`/property/${property.id}?${params.toString()}`}
-      className="group block bg-white rounded-2xl border border-gray-100 overflow-hidden hover:shadow-xl transition-all duration-200"
-      style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.08)' }}
-    >
-      {/* Cover image */}
-      <div className="relative aspect-[4/3] bg-gray-100 overflow-hidden">
-        {property.cover_image ? (
-          <img
-            src={property.cover_image}
-            alt={property.name}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-            loading="lazy"
-          />
-        ) : (
-          <div className="w-full h-full flex flex-col items-center justify-center text-gray-300 gap-2">
-            <span className="text-4xl">🏨</span>
-            <span className="text-xs">No photo</span>
-          </div>
-        )}
-
-        {/* Category badge */}
-        <span className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm text-gray-700 text-[10px] font-semibold px-2 py-0.5 rounded-full capitalize">
-          {property.category.toLowerCase()}
-        </span>
-
-        {/* Free cancellation badge */}
-        {hasFreeCancellation && (
-          <span className="absolute top-3 right-3 bg-[#00875A] text-white text-[10px] font-semibold px-2 py-0.5 rounded-full">
-            Free cancel
-          </span>
-        )}
-      </div>
-
-      {/* Content */}
-      <div className="p-4">
-        {/* Star rating */}
-        {property.star_rating !== null && (
-          <div className="mb-1.5">
-            <StarRow rating={Math.round(property.star_rating)} />
-          </div>
-        )}
-
-        {/* Name */}
-        <h3 className="font-bold text-gray-900 text-sm leading-snug line-clamp-2 mb-0.5">
-          {property.name}
-        </h3>
-
-        {/* City */}
-        <p className="text-xs text-gray-500 mb-2.5 flex items-center gap-1">
-          <span>📍</span>
-          {property.city}
-        </p>
-
-        {/* Amenity pills */}
-        {visibleAmenities.length > 0 && (
-          <div className="flex flex-wrap gap-1 mb-3">
-            {visibleAmenities.map(amenity => {
-              const key = amenity.toLowerCase();
-              const icon = Object.entries(AMENITY_ICONS).find(([k]) => key.includes(k))?.[1] ?? '✓';
-              return (
-                <span
-                  key={amenity}
-                  className="inline-flex items-center gap-0.5 text-[10px] text-gray-500 bg-gray-50 border border-gray-100 rounded-full px-2 py-0.5"
-                >
-                  {icon} {amenity}
-                </span>
-              );
-            })}
-            {amenities.length > 3 && (
-              <span className="text-[10px] text-gray-400 px-1 py-0.5">
-                +{amenities.length - 3} more
-              </span>
-            )}
-          </div>
-        )}
-
-        {/* Price */}
-        {property.min_price && (
-          <div className="flex items-baseline justify-between border-t border-gray-50 pt-3">
-            <div>
-              <span className="text-[10px] text-gray-400 block">from</span>
-              <span className="text-base font-extrabold text-[#003580]">
-                {formatPrice(property.min_price)}
-              </span>
-              <span className="text-gray-400 font-normal text-xs"> / night</span>
+    <motion.div whileHover={{ y: -4 }} transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }} className="h-full">
+      <Link
+        to={`/property/${property.id}?${params.toString()}`}
+        className="group flex flex-col h-full bento-card overflow-hidden"
+      >
+        {/* Cover image */}
+        <div className="relative aspect-[4/3] bg-surface-elev overflow-hidden flex-shrink-0">
+          {property.cover_image ? (
+            <img
+              src={property.cover_image}
+              alt={property.name}
+              className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+              loading="lazy"
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center text-muted">
+              <MapPin size={32} />
             </div>
-            <span className="text-xs font-semibold text-[#003580] bg-blue-50 px-3 py-1.5 rounded-lg group-hover:bg-[#003580] group-hover:text-white transition-colors">
-              View →
+          )}
+
+          {/* Image gradient overlay for badge contrast */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-black/10 pointer-events-none" />
+
+          {/* Category badge */}
+          <span className="absolute top-3 left-3 backdrop-blur-md bg-white/85 text-ink text-[10px] font-bold px-2.5 py-1 rounded-full capitalize shadow-soft">
+            {property.category.toLowerCase()}
+          </span>
+
+          {/* Free cancellation badge */}
+          {hasFreeCancellation && (
+            <span className="absolute top-3 right-3 inline-flex items-center gap-1 backdrop-blur-md bg-success/90 text-white text-[10px] font-bold px-2.5 py-1 rounded-full shadow-soft">
+              <CheckCircle2 size={11} /> Free cancel
             </span>
-          </div>
-        )}
-      </div>
-    </Link>
+          )}
+        </div>
+
+        {/* Content */}
+        <div className="p-4 flex flex-col flex-1">
+          {/* Star rating */}
+          {property.star_rating !== null && (
+            <div className="mb-1.5 flex-shrink-0">
+              <StarRow rating={Math.round(property.star_rating)} />
+            </div>
+          )}
+
+          {/* Name */}
+          <h3 className="font-display font-bold text-ink text-sm leading-snug line-clamp-2 mb-1 flex-shrink-0">
+            {property.name}
+          </h3>
+
+          {/* City */}
+          <p className="text-xs text-muted mb-2.5 inline-flex items-center gap-1 flex-shrink-0">
+            <MapPin size={12} />
+            {property.city}
+          </p>
+
+          {/* Amenity pills — constrained height */}
+          {visibleAmenities.length > 0 && (
+            <div className="flex flex-wrap gap-1 mb-3 flex-shrink-0 h-8 overflow-hidden">
+              {visibleAmenities.map(amenity => {
+                const key = amenity.toLowerCase();
+                const found = AMENITY_ICONS.find(a => key.includes(a.match));
+                const Icon = found?.Icon ?? CheckCircle2;
+                return (
+                  <span
+                    key={amenity}
+                    className="inline-flex items-center gap-1 text-[10px] text-muted bg-surface-elev border border-line rounded-full px-2 py-0.5"
+                  >
+                    <Icon size={10} /> {amenity}
+                  </span>
+                );
+              })}
+              {amenities.length > 3 && (
+                <span className="text-[10px] text-muted/70 px-1 py-0.5">
+                  +{amenities.length - 3} more
+                </span>
+              )}
+            </div>
+          )}
+
+          {/* Spacer to push price to bottom */}
+          <div className="flex-1" />
+
+          {/* Price */}
+          {property.min_price && (
+            <div className="flex items-end justify-between border-t border-line/70 pt-3 flex-shrink-0">
+              <div>
+                <span className="text-[10px] text-muted block uppercase tracking-wide">from</span>
+                <span className="text-lg font-display font-extrabold gradient-text">
+                  {formatPrice(property.min_price)}
+                </span>
+                <span className="text-muted font-normal text-xs"> / night</span>
+              </div>
+              <span className="inline-flex items-center gap-1 text-xs font-semibold text-primary-600 bg-primary-500/10 px-3 py-1.5 rounded-md group-hover:bg-primary-600 group-hover:text-white transition-colors">
+                View <ArrowRight size={12} />
+              </span>
+            </div>
+          )}
+        </div>
+      </Link>
+    </motion.div>
   );
 }

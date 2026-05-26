@@ -13,6 +13,9 @@ export const authApi = {
   refresh: (refreshToken: string) =>
     apiClient.post('/auth/refresh', { refreshToken }).then((r) => r.data),
 
+  resendOtp: (userId: string) =>
+    apiClient.post('/auth/resend-otp', { userId }).then((r) => r.data),
+
   logout: () =>
     apiClient.post('/auth/logout').then((r) => r.data),
 };

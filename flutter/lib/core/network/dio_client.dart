@@ -12,7 +12,10 @@ class DioClient {
         baseUrl: kBaseUrl,
         connectTimeout: const Duration(milliseconds: kConnectTimeoutMs),
         receiveTimeout: const Duration(milliseconds: kReceiveTimeoutMs),
-        headers: {'Content-Type': 'application/json'},
+        headers: {
+          'Content-Type': 'application/json',
+          'User-Agent': 'Mozilla/5.0 (Linux; Android 10) AppleWebKit/537.36',
+        },
       ),
     );
     dio.interceptors.add(AuthInterceptor(storage, dio));

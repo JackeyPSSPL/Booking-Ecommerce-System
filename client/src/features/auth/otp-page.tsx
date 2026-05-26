@@ -1,12 +1,14 @@
 import { useRef, useState, useEffect, KeyboardEvent, ClipboardEvent } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { useSearchParams, useNavigate, useLocation } from 'react-router-dom';
-import toast from 'react-hot-toast';
+import { Mail } from 'lucide-react';
 import { authApi } from '../../api/auth.api';
 import { useAuthStore } from '../../store/auth.store';
 import { getApiError } from '../../utils/error';
+import { useModal } from '../../hooks/useModal';
+import NotificationModal from '../../components/ui/NotificationModal';
 import Button from '../../components/ui/Button';
-import ErrorBanner from '../../components/ui/ErrorBanner';
+import AuthLayout from './auth-layout';
 
 const OTP_LENGTH  = 6;
 const OTP_EXPIRY  = 10 * 60;  // 10 minutes in seconds
@@ -32,6 +34,7 @@ export default function OtpPage() {
   const navigate               = useNavigate();
   const { state }              = useLocation();
   const login                  = useAuthStore(s => s.login);
+  const { modal, show: showModal, close: closeModal } = useModal();
   const userId                 = searchParams.get('userId') ?? '';
   const devOtp                 = (state as { devOtp?: string } | null)?.devOtp;
 
@@ -44,15 +47,28 @@ export default function OtpPage() {
     mutationFn: (code: string) => authApi.verifyOtp(userId, code),
     onSuccess: (res) => {
       login(res.data.user, res.data.accessToken, '');
-      toast.success('Email verified! Welcome.');
-      navigate('/');
+      showModal({ type: 'success', title: 'Success', message: 'Email verified! Welcome.' });
+      setTimeout(() => navigate('/'), 1500);
     },
     onError: () => {
       submitCalledRef.current = false;
     },
   });
 
-  // Auto-submit when all 6 digits filled
+  const resendMutation = useMutation({
+    mutationFn: () => authApi.resendOtp(userId),
+    onSuccess: () => {
+      reset();
+      submitCalledRef.current = false;
+      setDigits(Array(OTP_LENGTH).fill(''));
+      inputRefs.current[0]?.focus();
+      showModal({ type: 'success', title: 'OTP Sent', message: 'New OTP sent — check your email.' });
+    },
+    onError: (err) => {
+      showModal({ type: 'error', title: 'Error', message: getApiError(err) });
+    },
+  });
+
   useEffect(() => {
     const code = digits.join('');
     if (code.length === OTP_LENGTH && !submitCalledRef.current && !mutation.isPending) {
@@ -62,7 +78,6 @@ export default function OtpPage() {
   }, [digits, mutation]);
 
   const handleChange = (index: number, value: string) => {
-    // Accept paste of full code into first box
     if (value.length > 1) return;
     const digit = value.replace(/\D/, '');
     const next  = digits.slice();
@@ -101,11 +116,7 @@ export default function OtpPage() {
   };
 
   const handleResend = () => {
-    reset();
-    submitCalledRef.current = false;
-    setDigits(Array(OTP_LENGTH).fill(''));
-    inputRefs.current[0]?.focus();
-    toast('New OTP sent — check server logs in dev mode.', { icon: '📧' });
+    resendMutation.mutate();
   };
 
   if (!userId) {
@@ -114,29 +125,25 @@ export default function OtpPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
-      <div className="w-full max-w-sm bg-white rounded-xl shadow-sm border border-gray-100 p-8">
-        <div className="mb-6 text-center">
-          <div className="text-4xl mb-3">📧</div>
-          <h1 className="text-2xl font-bold text-gray-900">Verify your email</h1>
-          <p className="text-sm text-gray-500 mt-2">
-            Enter the 6-digit code we sent to your email.
-          </p>
-          {import.meta.env.DEV && devOtp && (
-            <div className="mt-3 rounded-lg bg-amber-50 border border-amber-200 px-4 py-2 text-sm">
-              <span className="text-amber-600 font-medium">DEV — your OTP: </span>
-              <span className="font-mono font-bold text-amber-800 tracking-widest">{devOtp}</span>
-            </div>
-          )}
+    <>
+      <NotificationModal modal={modal} onClose={closeModal} />
+      <AuthLayout
+        title="Verify your email"
+        subtitle="Enter the 6-digit code we sent to your email."
+      >
+        <div className="flex justify-center mb-5">
+          <div className="w-14 h-14 rounded-full bg-gradient-card flex items-center justify-center text-primary-600 shadow-card">
+            <Mail size={26} />
+          </div>
         </div>
 
-        {mutation.isError && (
-          <div className="mb-4">
-            <ErrorBanner message={getApiError(mutation.error)} />
+        {import.meta.env.DEV && devOtp && (
+          <div className="mb-5 rounded-md bg-accent-500/10 border border-accent-500/30 px-4 py-2 text-sm text-center">
+            <span className="text-accent-600 font-medium">DEV — your OTP: </span>
+            <span className="font-mono font-bold text-ink tracking-widest">{devOtp}</span>
           </div>
         )}
 
-        {/* 6-box OTP input */}
         <div className="flex justify-center gap-2 mb-6">
           {digits.map((digit, i) => (
             <input
@@ -150,11 +157,11 @@ export default function OtpPage() {
               onKeyDown={e => handleKeyDown(i, e)}
               onPaste={handlePaste}
               className={[
-                'w-11 h-14 text-center text-xl font-bold rounded-lg border-2 outline-none transition-colors',
+                'w-11 h-14 text-center text-xl font-bold rounded-md border-2 outline-none transition-all duration-150',
                 digit
-                  ? 'border-primary-500 bg-primary-50 text-primary-700'
-                  : 'border-gray-200 text-gray-900',
-                'focus:border-primary-500 focus:ring-0',
+                  ? 'border-primary-500 bg-primary-500/10 text-ink shadow-glow'
+                  : 'border-line bg-surface text-ink',
+                'focus:border-primary-500 focus:ring-4 focus:ring-primary-500/15',
               ].join(' ')}
             />
           ))}
@@ -162,6 +169,8 @@ export default function OtpPage() {
 
         <Button
           type="button"
+          variant="gradient"
+          size="lg"
           className="w-full"
           loading={mutation.isPending}
           onClick={() => {
@@ -172,33 +181,32 @@ export default function OtpPage() {
           Verify
         </Button>
 
-        {/* Countdown + resend */}
         <div className="mt-5 text-center text-sm">
           {remaining > 0 ? (
-            <p className="text-gray-500">
+            <p className="text-muted">
               Code expires in{' '}
-              <span className={remaining < 60 ? 'text-red-500 font-semibold' : 'font-medium'}>
+              <span className={remaining < 60 ? 'text-danger font-semibold' : 'font-semibold text-ink'}>
                 {display}
               </span>
             </p>
           ) : (
-            <p className="text-gray-500">Code expired.</p>
+            <p className="text-muted">Code expired.</p>
           )}
           <button
             type="button"
-            disabled={remaining > 0}
+            disabled={remaining > 0 || resendMutation.isPending}
             onClick={handleResend}
             className={[
-              'mt-2 text-sm font-medium transition-colors',
-              remaining > 0
-                ? 'text-gray-300 cursor-not-allowed'
-                : 'text-primary-500 hover:underline cursor-pointer',
+              'mt-2 text-sm font-semibold transition-colors',
+              remaining > 0 || resendMutation.isPending
+                ? 'text-muted/50 cursor-not-allowed'
+                : 'text-primary-600 hover:underline cursor-pointer',
             ].join(' ')}
           >
-            Resend OTP
+            {resendMutation.isPending ? 'Sending…' : 'Resend OTP'}
           </button>
         </div>
-      </div>
-    </div>
+      </AuthLayout>
+    </>
   );
 }

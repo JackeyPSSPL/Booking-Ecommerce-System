@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import { apiClient } from '../../api/client';
 
 interface DisplayMessage {
   role: 'user' | 'bot';
@@ -10,49 +11,12 @@ interface ApiContent {
   parts: { text: string }[];
 }
 
-const SYSTEM_INSTRUCTION =
-  'You are a helpful hotel booking assistant for StayBook, an Indian hotel booking platform. ' +
-  'Only answer questions related to hotels, properties, room types, amenities, pricing, availability, ' +
-  'travel destinations in India, and booking processes. ' +
-  'If asked anything unrelated to hotels or travel, politely decline and redirect to hotel topics. ' +
-  'Keep responses concise (2-4 sentences max) and friendly.';
-
 const WELCOME_MSG =
   'Hi! I can help you with hotels, room types, amenities, and booking info. What would you like to know?';
 
-const API_KEY = import.meta.env.VITE_GEMINI_API_KEY as string;
-const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${API_KEY}`;
-
 async function askGemini(history: ApiContent[], userText: string): Promise<string> {
-  const body = {
-    // camelCase is required by the Gemini REST API
-    systemInstruction: { parts: [{ text: SYSTEM_INSTRUCTION }] },
-    contents: [...history, { role: 'user', parts: [{ text: userText }] }],
-    // temperature must be omitted for gemini-2.5-flash — thinking mode rejects it
-    generationConfig: { maxOutputTokens: 400 },
-  };
-
-  const res = await fetch(GEMINI_URL, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-  });
-
-  if (!res.ok) {
-    const errBody = await res.json().catch(() => ({})) as { error?: { message?: string } };
-    throw new Error(errBody.error?.message ?? `HTTP ${res.status}`);
-  }
-
-  const data = await res.json() as {
-    candidates?: { content?: { parts?: { text?: string }[] } }[];
-  };
-
-  const text = data.candidates?.[0]?.content?.parts
-    ?.map(p => p.text ?? '')
-    .join('')
-    .trim();
-
-  return text || 'No response received.';
+  const res = await apiClient.post<{ data: { reply: string } }>('/chat/ask', { history, userText });
+  return res.data.data.reply;
 }
 
 // ── Icons ──────────────────────────────────────────────────────────────────────

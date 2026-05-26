@@ -1,6 +1,6 @@
 import { Prisma, PropertyStatus } from '@prisma/client';
 import { prisma } from '../../config/prisma';
-import { CreatePropertyDto, UpdatePropertyDto, AddRoomTypeDto, AddImagesDto } from './properties.schema';
+import { CreatePropertyDto, UpdatePropertyDto, AddRoomTypeDto, AddImagesDto, CreateRatePlanDto } from './properties.schema';
 import { PropertySearchResult } from '../search/search.repository';
 
 export class PropertiesRepository {
@@ -54,7 +54,7 @@ export class PropertiesRepository {
   async publish(id: string) {
     return prisma.property.update({
       where: { id },
-      data: { status: PropertyStatus.ACTIVE },
+      data: { status: PropertyStatus.PENDING_REVIEW },
     });
   }
 
@@ -90,6 +90,60 @@ export class PropertiesRepository {
     });
   }
 
+  async getRatePlans(roomTypeId: string) {
+    return prisma.ratePlan.findMany({
+      where: { roomTypeId },
+      orderBy: { planType: 'asc' },
+    });
+  }
+
+  async createRatePlan(roomTypeId: string, data: CreateRatePlanDto) {
+    return prisma.ratePlan.create({
+      data: {
+        roomTypeId,
+        planType: data.planType,
+        discountPercent: data.discountPercent ?? 0,
+        minNights: data.minNights ?? 1,
+      },
+    });
+  }
+
+  async deleteRatePlan(ratePlanId: string) {
+    return prisma.ratePlan.delete({
+      where: { id: ratePlanId },
+    });
+  }
+
+  async getAvailability(propertyId: string, year: number, month: number) {
+    const startDate = new Date(year, month - 1, 1);
+    const endDate = new Date(year, month, 0);
+
+    const availability = await prisma.availability.findMany({
+      where: {
+        roomType: { propertyId },
+        date: { gte: startDate, lte: endDate },
+      },
+      select: {
+        date: true,
+        isBlocked: true,
+        roomTypeId: true,
+      },
+      orderBy: { date: 'asc' },
+    });
+
+    const roomTypes = await prisma.roomType.findMany({
+      where: { propertyId },
+      select: { id: true, name: true },
+    });
+
+    return {
+      year,
+      month,
+      roomTypes,
+      availability,
+    };
+  }
+
   async getFeatured(): Promise<PropertySearchResult[]> {
     return prisma.$queryRaw<PropertySearchResult[]>(Prisma.sql`
       SELECT
@@ -103,22 +157,30 @@ export class PropertiesRepository {
         p.amenities,
         p.description,
         p.booking_mode::text AS booking_mode,
-        (
-          SELECT MIN(rt.base_price)::text
-          FROM room_types rt
-          WHERE rt.property_id = p.id
-        ) AS min_price,
-        (
-          SELECT pi.url
-          FROM property_images pi
-          WHERE pi.property_id = p.id
-          ORDER BY pi.sort_order ASC
-          LIMIT 1
-        ) AS cover_image
+        mp.min_price,
+        ci.cover_image
       FROM properties p
+      LEFT JOIN LATERAL (
+        SELECT MIN(rt.base_price)::text AS min_price
+        FROM room_types rt
+        WHERE rt.property_id = p.id
+      ) mp ON true
+      LEFT JOIN LATERAL (
+        SELECT pi.url AS cover_image
+        FROM property_images pi
+        WHERE pi.property_id = p.id
+        ORDER BY pi.sort_order ASC
+        LIMIT 1
+      ) ci ON true
       WHERE p.status = 'ACTIVE'
       ORDER BY p.star_rating DESC NULLS LAST, p.name ASC
       LIMIT 8
     `);
+  }
+
+  async getKycByPropertyId(propertyId: string) {
+    return prisma.partnerLegal.findUnique({
+      where: { propertyId },
+    });
   }
 }

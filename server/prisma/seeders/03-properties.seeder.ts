@@ -364,9 +364,10 @@ export async function seedProperties(
     // Create cover image
     const imageExists = await prisma.propertyImage.findFirst({ where: { propertyId: property.id } });
     if (!imageExists) {
-      await prisma.propertyImage.create({
+      const image = await prisma.propertyImage.create({
         data: { propertyId: property.id, url: p.image, tag: ImageTag.EXTERIOR, sortOrder: 0 },
       });
+      console.log(`    📸 Image created: ${image.url}`);
     }
 
     propertyIds.push(property.id);

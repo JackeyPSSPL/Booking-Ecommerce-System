@@ -19,7 +19,7 @@ export interface PropertySearchResult {
 
 export class SearchRepository {
   async search(dto: SearchQueryDto): Promise<{ data: PropertySearchResult[]; total: number }> {
-    const { destination, checkin, checkout, adults, category, page, limit } = dto;
+    const { destination, checkin, checkout, adults, category, minPrice, maxPrice, stars, page, limit } = dto;
     const offset = (page - 1) * limit;
     const destLike = `%${destination}%`;
     const checkinDate = new Date(checkin);
@@ -27,6 +27,21 @@ export class SearchRepository {
 
     const categoryFilter = category
       ? Prisma.sql`AND p.category::text = ${category}`
+      : Prisma.empty;
+
+    const priceFilter = minPrice || maxPrice
+      ? Prisma.sql`
+        AND EXISTS (
+          SELECT 1 FROM room_types rt3
+          WHERE rt3.property_id = p.id
+          AND rt3.base_price >= ${minPrice ?? 0}
+          AND rt3.base_price <= ${maxPrice ?? 999999}
+        )
+      `
+      : Prisma.empty;
+
+    const starsFilter = stars
+      ? Prisma.sql`AND p.star_rating >= ${stars}`
       : Prisma.empty;
 
     const availabilityFilter = Prisma.sql`
@@ -52,6 +67,8 @@ export class SearchRepository {
         OR p.search_vector @@ plainto_tsquery('english', ${destination})
       )
       ${categoryFilter}
+      ${priceFilter}
+      ${starsFilter}
       ${availabilityFilter}
     `;
 
@@ -68,19 +85,21 @@ export class SearchRepository {
           p.amenities,
           p.description,
           p.booking_mode::text AS booking_mode,
-          (
-            SELECT MIN(rt2.base_price)::text
-            FROM room_types rt2
-            WHERE rt2.property_id = p.id
-          ) AS min_price,
-          (
-            SELECT pi.url
-            FROM property_images pi
-            WHERE pi.property_id = p.id
-            ORDER BY pi.sort_order ASC
-            LIMIT 1
-          ) AS cover_image
+          mp.min_price,
+          ci.cover_image
         FROM properties p
+        LEFT JOIN LATERAL (
+          SELECT MIN(rt2.base_price)::text AS min_price
+          FROM room_types rt2
+          WHERE rt2.property_id = p.id
+        ) mp ON true
+        LEFT JOIN LATERAL (
+          SELECT pi.url AS cover_image
+          FROM property_images pi
+          WHERE pi.property_id = p.id
+          ORDER BY pi.sort_order ASC
+          LIMIT 1
+        ) ci ON true
         ${whereClause}
         ORDER BY p.star_rating DESC NULLS LAST, p.name ASC
         LIMIT ${limit} OFFSET ${offset}

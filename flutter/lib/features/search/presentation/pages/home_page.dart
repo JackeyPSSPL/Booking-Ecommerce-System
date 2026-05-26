@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import '../../../../core/theme/app_gradients.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../features/auth/presentation/bloc/auth_bloc.dart';
-import '../../../../features/auth/presentation/bloc/auth_event.dart';
 import '../../../../features/auth/presentation/bloc/auth_state.dart';
 import '../../domain/entities/search_params.dart';
 import '../bloc/search_bloc.dart';
@@ -41,9 +41,8 @@ class _HomePageState extends State<HomePage> {
             }
           },
           child: Scaffold(
-            backgroundColor: AppColors.background,
             body: RefreshIndicator(
-              color: AppColors.primary,
+              color: Theme.of(context).colorScheme.primary,
               // displace the spinner so it shows just below the search card,
               // not at the very top above the app bar
               displacement: 16,
@@ -59,12 +58,7 @@ class _HomePageState extends State<HomePage> {
                   SliverToBoxAdapter(child: _buildSearchBar(state)),
                   if (state is SearchLoading)
                     const SliverFillRemaining(
-                      child: Center(
-                        child: CircularProgressIndicator(
-                          valueColor:
-                              AlwaysStoppedAnimation<Color>(AppColors.primary),
-                        ),
-                      ),
+                      child: Center(child: CircularProgressIndicator()),
                     )
                   else if (state is SearchError)
                     SliverFillRemaining(child: _buildError(state.message))
@@ -86,12 +80,13 @@ class _HomePageState extends State<HomePage> {
 
   Widget _buildAppBar(
       BuildContext context, bool isResults, SearchState state) {
+    final theme = Theme.of(context);
     return SliverAppBar(
-      expandedHeight: 120,
+      expandedHeight: 130,
       floating: true,
       snap: true,
       pinned: false,
-      backgroundColor: AppColors.primary,
+      backgroundColor: theme.colorScheme.primary,
       leading: isResults
           ? IconButton(
               icon: const Icon(Icons.arrow_back, color: Colors.white),
@@ -101,12 +96,8 @@ class _HomePageState extends State<HomePage> {
           : null,
       flexibleSpace: FlexibleSpaceBar(
         background: Container(
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [AppColors.primaryDark, AppColors.primary],
-            ),
+          decoration: BoxDecoration(
+            gradient: AppGradients.primaryButton(theme.brightness),
           ),
           padding: const EdgeInsets.fromLTRB(20, 60, 20, 12),
           child: Row(
